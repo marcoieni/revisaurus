@@ -1,0 +1,81 @@
+---
+import type { PullRequestReview, RepositoryConfig } from "../../types/revisaurus.js";
+
+const { data } = Astro.props;
+const repositories = data.repositories as Array<Pick<RepositoryConfig, "id" | "name" | "provider" | "url">>;
+const reviews = data.reviews as PullRequestReview[];
+const initialRepo = data.repositories[0]?.id ?? "";
+---
+
+<main class="app-shell">
+  <header class="topbar">
+    <div>
+      <h1>Revisaurus</h1>
+      <p>AI pull request reviews generated from recent repository activity.</p>
+    </div>
+    <div class="repo-picker">
+      <label for="repo-search">Repository</label>
+      <input id="repo-search" type="search" list="repo-options" value={initialRepo} autocomplete="off" />
+      <datalist id="repo-options">
+        {repositories.map((repo) => <option value={repo.id}>{repo.name}</option>)}
+      </datalist>
+    </div>
+  </header>
+
+  <section class="reviews" id="reviews">
+    {
+      repositories.map((repo) => (
+        <section class="repo-section" data-repo={repo.id} hidden={repo.id !== initialRepo}>
+          <div class="repo-heading">
+            <div>
+              <h2>{repo.name}</h2>
+              <a href={repo.url}>{repo.url}</a>
+            </div>
+            <span>{reviews.filter((review) => review.repoId === repo.id).length} reviews</span>
+          </div>
+          {reviews
+            .filter((review) => review.repoId === repo.id)
+            .map((review) => (
+              <article class="review">
+                <header class="review-header">
+                  <div>
+                    <a href={review.pullRequest.url}>#{review.pullRequest.number} {review.pullRequest.title}</a>
+                    <p>
+                      {review.pullRequest.author} · {review.status} · {review.reviewedCommit.slice(0, 8)}
+                    </p>
+                  </div>
+                  <time datetime={review.reviewedAt}>{new Date(review.reviewedAt).toLocaleString()}</time>
+                </header>
+                <div class="summary">{review.summary}</div>
+                {review.error && <pre class="error">{review.error}</pre>}
+                <div
+                  class="diff-view"
+                  data-patch={encodeURIComponent(review.diff)}
+                  data-comments={encodeURIComponent(JSON.stringify(review.comments))}
+                >
+                </div>
+              </article>
+            ))}
+        </section>
+      ))
+    }
+  </section>
+</main>
+
+<script>
+  import "../runtime/diffs.js";
+
+  const input = document.querySelector<HTMLInputElement>("#repo-search");
+  const sections = [...document.querySelectorAll<HTMLElement>(".repo-section")];
+
+  input?.addEventListener("input", () => {
+    const query = input.value.toLowerCase();
+    const exact = sections.find((section) => section.dataset.repo === input.value);
+    const fuzzy = sections.find((section) => section.dataset.repo?.toLowerCase().includes(query));
+    const selected = exact ?? fuzzy ?? sections[0];
+
+    for (const section of sections) {
+      section.hidden = section !== selected;
+    }
+  });
+</script>

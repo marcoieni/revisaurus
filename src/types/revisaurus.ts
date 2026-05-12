@@ -1,0 +1,70 @@
+export type ProviderKind = "github" | "gitlab" | "forgejo";
+
+export type ReviewStatus = "reviewed" | "skipped" | "failed";
+
+export interface RevisaurusConfig {
+  outputDir: string;
+  dataDir: string;
+  maxPullRequests: number;
+  skippedAuthors: string[];
+  reviewer: ReviewerConfig;
+  repositories: RepositoryConfig[];
+}
+
+export interface ReviewerConfig {
+  kind: "kiro" | "codex";
+  command: string;
+  trustTools: string;
+  timeoutSeconds: number;
+}
+
+export interface RepositoryConfig {
+  id: string;
+  name: string;
+  provider: ProviderKind;
+  url: string;
+  owner: string;
+  repo: string;
+  branch?: string;
+  maxPullRequests: number;
+  skippedAuthors: string[];
+}
+
+export interface PullRequestSummary {
+  provider: ProviderKind;
+  repoId: string;
+  number: number;
+  title: string;
+  url: string;
+  author: string;
+  headSha: string;
+  baseSha: string;
+  updatedAt: string;
+  mergedAt?: string | null;
+}
+
+export interface ReviewComment {
+  path: string;
+  line: number;
+  side: "left" | "right";
+  severity: "critical" | "warning" | "suggestion" | "note";
+  body: string;
+}
+
+export interface PullRequestReview {
+  repoId: string;
+  pullRequest: PullRequestSummary;
+  status: ReviewStatus;
+  reviewedCommit: string;
+  reviewedAt: string;
+  summary: string;
+  rawOutput: string;
+  diff: string;
+  comments: ReviewComment[];
+  error?: string;
+}
+
+export interface ReviewState {
+  version: 1;
+  reviews: Record<string, PullRequestReview>;
+}
