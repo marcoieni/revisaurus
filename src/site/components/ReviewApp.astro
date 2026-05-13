@@ -5,6 +5,7 @@ const { data } = Astro.props;
 const repositories = data.repositories as Array<Pick<RepositoryConfig, "id" | "name" | "provider" | "url">>;
 const reviews = data.reviews as PullRequestReview[];
 const initialRepo = data.repositories[0]?.id ?? "";
+const initialRepoName = data.repositories[0]?.name ?? "";
 ---
 
 <main class="app-shell">
@@ -15,10 +16,36 @@ const initialRepo = data.repositories[0]?.id ?? "";
     </div>
     <div class="repo-picker">
       <label for="repo-search">Repository</label>
-      <input id="repo-search" type="search" list="repo-options" value={initialRepo} autocomplete="off" />
-      <datalist id="repo-options">
-        {repositories.map((repo) => <option value={repo.id}>{repo.name}</option>)}
-      </datalist>
+      <div class="repo-combobox">
+        <input
+          id="repo-search"
+          type="search"
+          value={initialRepoName}
+          autocomplete="off"
+          role="combobox"
+          aria-controls="repo-options"
+          aria-expanded="false"
+          aria-autocomplete="list"
+          aria-activedescendant=""
+        />
+        <ul id="repo-options" role="listbox" hidden>
+          {
+            repositories.map((repo, index) => (
+              <li
+                id={`repo-option-${index}`}
+                role="option"
+                data-repo={repo.id}
+                data-name={repo.name}
+                data-search={`${repo.name} ${repo.id} ${repo.url}`}
+                aria-selected={repo.id === initialRepo ? "true" : "false"}
+              >
+                <span>{repo.name}</span>
+                <small>{repo.url}</small>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
     </div>
   </header>
 
@@ -66,16 +93,144 @@ const initialRepo = data.repositories[0]?.id ?? "";
   import "../runtime/diffs.js";
 
   const input = document.querySelector<HTMLInputElement>("#repo-search");
+  const list = document.querySelector<HTMLElement>("#repo-options");
+  const options = [...document.querySelectorAll<HTMLElement>("#repo-options [role='option']")];
   const sections = [...document.querySelectorAll<HTMLElement>(".repo-section")];
+  const currentRepo = options.find((option) => option.getAttribute("aria-selected") === "true") ?? options[0];
+  let selectedRepo = currentRepo?.dataset.repo ?? "";
+  let activeIndex = Math.max(0, options.findIndex((option) => option.dataset.repo === selectedRepo));
+
+  function fuzzyScore(value: string, query: string): number {
+    let score = 0;
+    let queryIndex = 0;
+
+    for (const char of value.toLowerCase()) {
+      if (char === query[queryIndex]) {
+        queryIndex += 1;
+        score += 2;
+      } else if (queryIndex > 0) {
+        score -= 0.05;
+      }
+    }
+
+    return queryIndex === query.length ? score - value.length * 0.01 : -Infinity;
+  }
+
+  function visibleOptions(): HTMLElement[] {
+    return options.filter((option) => !option.hidden);
+  }
+
+  function setActiveOption(index: number) {
+    const visible = visibleOptions();
+
+    if (visible.length === 0 || !input) {
+      activeIndex = -1;
+      input?.setAttribute("aria-activedescendant", "");
+      return;
+    }
+
+    activeIndex = (index + visible.length) % visible.length;
+    for (const option of options) {
+      option.classList.toggle("active", option === visible[activeIndex]);
+    }
+    input.setAttribute("aria-activedescendant", visible[activeIndex].id);
+  }
+
+  function showList() {
+    list?.removeAttribute("hidden");
+    input?.setAttribute("aria-expanded", "true");
+  }
+
+  function hideList() {
+    list?.setAttribute("hidden", "");
+    input?.setAttribute("aria-expanded", "false");
+    input?.setAttribute("aria-activedescendant", "");
+    for (const option of options) {
+      option.classList.remove("active");
+    }
+  }
+
+  function filterOptions(query: string) {
+    const normalized = query.trim().toLowerCase();
+    const ranked = options
+      .map((option, originalIndex) => ({
+        option,
+        originalIndex,
+        score: normalized ? fuzzyScore(option.dataset.search ?? "", normalized) : 0,
+      }))
+      .sort((left, right) => right.score - left.score || left.originalIndex - right.originalIndex);
+
+    for (const { option, score } of ranked) {
+      option.hidden = score === -Infinity;
+      list?.append(option);
+    }
+
+    setActiveOption(0);
+  }
+
+  function selectRepo(option: HTMLElement) {
+    selectedRepo = option.dataset.repo ?? selectedRepo;
+    if (input) {
+      input.value = option.dataset.name ?? selectedRepo;
+    }
+
+    for (const item of options) {
+      item.setAttribute("aria-selected", String(item === option));
+    }
+    for (const section of sections) {
+      section.hidden = section.dataset.repo !== selectedRepo;
+    }
+    hideList();
+  }
+
+  input?.addEventListener("focus", () => {
+    filterOptions("");
+    showList();
+  });
+
+  input?.addEventListener("click", () => {
+    filterOptions("");
+    showList();
+  });
 
   input?.addEventListener("input", () => {
-    const query = input.value.toLowerCase();
-    const exact = sections.find((section) => section.dataset.repo === input.value);
-    const fuzzy = sections.find((section) => section.dataset.repo?.toLowerCase().includes(query));
-    const selected = exact ?? fuzzy ?? sections[0];
+    filterOptions(input.value);
+    showList();
+  });
 
-    for (const section of sections) {
-      section.hidden = section !== selected;
+  input?.addEventListener("keydown", (event) => {
+    const visible = visibleOptions();
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      showList();
+      setActiveOption(activeIndex + 1);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      showList();
+      setActiveOption(activeIndex - 1);
+    } else if (event.key === "Enter" && visible[activeIndex]) {
+      event.preventDefault();
+      selectRepo(visible[activeIndex]);
+    } else if (event.key === "Escape") {
+      input.value = options.find((option) => option.dataset.repo === selectedRepo)?.dataset.name ?? input.value;
+      hideList();
+    }
+  });
+
+  list?.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    const option = (event.target as HTMLElement).closest<HTMLElement>("[role='option']");
+
+    if (option) {
+      selectRepo(option);
+    }
+  });
+
+  document.addEventListener("pointerdown", (event) => {
+    if (!input?.contains(event.target as Node) && !list?.contains(event.target as Node)) {
+      input && (input.value = options.find((option) => option.dataset.repo === selectedRepo)?.dataset.name ?? input.value);
+      hideList();
     }
   });
 </script>
