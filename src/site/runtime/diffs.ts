@@ -11,7 +11,8 @@ const diffs: FileDiff<ReviewAnnotation>[] = [];
 const currentTheme = getCurrentTheme();
 
 document.addEventListener("theme:selected", (event) => {
-    const theme = event instanceof CustomEvent && isThemeType(event.detail?.theme) ? event.detail.theme : getCurrentTheme();
+    const theme =
+        event instanceof CustomEvent && isThemeType(event.detail?.theme) ? event.detail.theme : getCurrentTheme();
     for (const diff of diffs) {
         diff.setThemeType(theme);
     }
