@@ -1,9 +1,10 @@
 ---
 import type { RepositoryConfig } from "../../types/revisaurus.js";
+import { repositoryLabel } from "../repositories.js";
 
 const { initialRepo, repositories } = Astro.props as {
   initialRepo: string;
-  repositories: Array<Pick<RepositoryConfig, "id" | "name" | "provider" | "url">>;
+  repositories: Array<Pick<RepositoryConfig, "id" | "name" | "provider" | "url" | "owner" | "repo">>;
 };
 
 const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
@@ -22,7 +23,7 @@ const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
       aria-activedescendant=""
       autocomplete="off"
       spellcheck="false"
-      value={selectedRepository?.name ?? initialRepo}
+      value={selectedRepository ? repositoryLabel(selectedRepository) : initialRepo}
       data-selected-repo={initialRepo}
     />
     <button class="repo-combobox-toggle" type="button" aria-label="Show repositories" tabindex="-1">
@@ -38,11 +39,11 @@ const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
           role="option"
           data-repo-option
           data-repo-id={repo.id}
-          data-repo-label={repo.name}
-          data-repo-search={`${repo.name} ${repo.id} ${repo.provider}`}
+          data-repo-label={repositoryLabel(repo)}
+          data-repo-search={`${repositoryLabel(repo)} ${repo.repo} ${repo.id} ${repo.provider}`}
           aria-selected={repo.id === initialRepo ? "true" : "false"}
         >
-          <span>{repo.name}</span>
+          <span>{repositoryLabel(repo)}</span>
           <small>{repo.id}</small>
         </button>
       ))
