@@ -2,8 +2,8 @@ import { mkdtemp } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
-import { emptyState, loadState, reviewKey, saveState } from "./reviewState.js";
-import type { PullRequestSummary, ReviewState } from "../types/revisaurus.js";
+import { emptyState, isReusableReview, loadState, reviewKey, saveState } from "./reviewState.js";
+import type { PullRequestReview, PullRequestSummary, ReviewState } from "../types/revisaurus.js";
 
 describe("reviewState", () => {
     it("creates an empty versioned state", () => {
@@ -44,6 +44,13 @@ describe("reviewState", () => {
     it("keys reviews by provider, repository, pull request number, and head SHA", () => {
         expect(reviewKey(pullRequest())).toBe("github:repo:7:abc");
     });
+
+    it("does not reuse failed reviews from cache", () => {
+        expect(isReusableReview(review({ status: "reviewed" }))).toBe(true);
+        expect(isReusableReview(review({ status: "skipped" }))).toBe(true);
+        expect(isReusableReview(review({ status: "failed" }))).toBe(false);
+        expect(isReusableReview(undefined)).toBe(false);
+    });
 });
 
 function pullRequest(overrides: Partial<PullRequestSummary> = {}): PullRequestSummary {
@@ -57,6 +64,21 @@ function pullRequest(overrides: Partial<PullRequestSummary> = {}): PullRequestSu
         headSha: "abc",
         baseSha: "def",
         updatedAt: "2026-01-01T00:00:00.000Z",
+        ...overrides,
+    };
+}
+
+function review(overrides: Partial<PullRequestReview> = {}): PullRequestReview {
+    return {
+        repoId: "repo",
+        pullRequest: pullRequest(),
+        status: "reviewed",
+        reviewedCommit: "abc",
+        reviewedAt: "2026-01-01T00:00:00.000Z",
+        summary: "Looks good.",
+        rawOutput: "",
+        diff: "",
+        comments: [],
         ...overrides,
     };
 }

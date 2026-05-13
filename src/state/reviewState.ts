@@ -1,5 +1,5 @@
 import { pathExists, readJson, writeJson } from "fs-extra/esm";
-import type { PullRequestSummary, ReviewState } from "../types/revisaurus.js";
+import type { PullRequestReview, PullRequestSummary, ReviewState } from "../types/revisaurus.js";
 
 export function emptyState(): ReviewState {
     return { version: 1, reviews: {} };
@@ -19,4 +19,8 @@ export async function saveState(path: string, state: ReviewState): Promise<void>
 
 export function reviewKey(pr: PullRequestSummary): string {
     return `${pr.provider}:${pr.repoId}:${pr.number}:${pr.headSha}`;
+}
+
+export function isReusableReview(review: PullRequestReview | undefined): boolean {
+    return Boolean(review && review.status !== "failed");
 }
