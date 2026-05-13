@@ -1,6 +1,2 @@
 include_fragments = true
 accept = '100..=103, 200..=299, 429'
-
-exclude = [
-  './src/site/styles/global.css'
-]

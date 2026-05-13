@@ -35,4 +35,5 @@ jobs:
           # when the rate limit is exceeded.
           args: |
             --no-progress
+            --root-dir ${{ github.workspace }}/public
             .
