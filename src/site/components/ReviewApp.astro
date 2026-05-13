@@ -5,20 +5,27 @@ const { data } = Astro.props;
 const repositories = data.repositories as Array<Pick<RepositoryConfig, "id" | "name" | "provider" | "url">>;
 const reviews = data.reviews as PullRequestReview[];
 const initialRepo = data.repositories[0]?.id ?? "";
+const reviewedCount = reviews.filter((review) => review.status === "reviewed").length;
+const commentCount = reviews.reduce((count, review) => count + review.comments.length, 0);
+const pluralize = (count: number, label: string) => `${count} ${label}${count === 1 ? "" : "s"}`;
 ---
 
 <main class="app-shell">
   <header class="topbar">
-    <div>
+    <div class="brand">
       <h1>Revisaurus</h1>
       <p>AI pull request reviews generated from recent repository activity.</p>
     </div>
+    <div class="topbar-stats" aria-label="Review summary">
+      <span><strong>{reviews.length}</strong> PR{reviews.length === 1 ? "" : "s"}</span>
+      <span><strong>{reviewedCount}</strong> reviewed</span>
+      <span><strong>{commentCount}</strong> comment{commentCount === 1 ? "" : "s"}</span>
+    </div>
     <div class="repo-picker">
-      <label for="repo-search">Repository</label>
-      <input id="repo-search" type="search" list="repo-options" value={initialRepo} autocomplete="off" />
-      <datalist id="repo-options">
-        {repositories.map((repo) => <option value={repo.id}>{repo.name}</option>)}
-      </datalist>
+      <label for="repo-select">Repository</label>
+      <select id="repo-select">
+        {repositories.map((repo) => <option value={repo.id} selected={repo.id === initialRepo}>{repo.name}</option>)}
+      </select>
     </div>
   </header>
 
@@ -31,20 +38,25 @@ const initialRepo = data.repositories[0]?.id ?? "";
               <h2>{repo.name}</h2>
               <a href={repo.url}>{repo.url}</a>
             </div>
-            <span>{reviews.filter((review) => review.repoId === repo.id).length} reviews</span>
+            <span>{pluralize(reviews.filter((review) => review.repoId === repo.id).length, "review")}</span>
           </div>
           {reviews
             .filter((review) => review.repoId === repo.id)
             .map((review) => (
-              <article class="review">
+              <article class:list={["review", review.status === "failed" && "is-failed"]}>
                 <header class="review-header">
                   <div>
                     <a href={review.pullRequest.url}>#{review.pullRequest.number} {review.pullRequest.title}</a>
-                    <p>
-                      {review.pullRequest.author} · {review.status} · {review.reviewedCommit.slice(0, 8)}
-                    </p>
+                    <ul class="review-meta" aria-label="Pull request details">
+                      <li>{review.pullRequest.author}</li>
+                      <li>{review.reviewedCommit.slice(0, 8)}</li>
+                      <li>{pluralize(review.comments.length, "comment")}</li>
+                    </ul>
                   </div>
-                  <time datetime={review.reviewedAt}>{new Date(review.reviewedAt).toLocaleString()}</time>
+                  <div class="review-status">
+                    <span class:list={["status-chip", review.status]}>{review.status}</span>
+                    <time datetime={review.reviewedAt}>{new Date(review.reviewedAt).toLocaleString()}</time>
+                  </div>
                 </header>
                 <div class="summary">{review.summary}</div>
                 {review.error && <pre class="error">{review.error}</pre>}
@@ -65,14 +77,11 @@ const initialRepo = data.repositories[0]?.id ?? "";
 <script>
   import "../runtime/diffs.js";
 
-  const input = document.querySelector<HTMLInputElement>("#repo-search");
+  const input = document.querySelector<HTMLSelectElement>("#repo-select");
   const sections = [...document.querySelectorAll<HTMLElement>(".repo-section")];
 
-  input?.addEventListener("input", () => {
-    const query = input.value.toLowerCase();
-    const exact = sections.find((section) => section.dataset.repo === input.value);
-    const fuzzy = sections.find((section) => section.dataset.repo?.toLowerCase().includes(query));
-    const selected = exact ?? fuzzy ?? sections[0];
+  input?.addEventListener("change", () => {
+    const selected = sections.find((section) => section.dataset.repo === input.value) ?? sections[0];
 
     for (const section of sections) {
       section.hidden = section !== selected;
