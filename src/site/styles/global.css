@@ -74,9 +74,18 @@ h1 {
     color: #666052;
 }
 
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
 .theme-selector {
     display: inline-grid;
-    grid-template-columns: repeat(2, minmax(72px, 1fr));
+    grid-template-columns: repeat(2, 36px);
     gap: 2px;
     height: 40px;
     box-sizing: border-box;
@@ -106,24 +115,44 @@ h1 {
     pointer-events: none;
 }
 
-.theme-selector span {
+.theme-selector .theme-option {
     display: grid;
     min-width: 0;
     place-items: center;
     border-radius: 4px;
-    padding: 0 10px;
     color: #5d5968;
     cursor: pointer;
-    font-size: 13px;
-    font-weight: 700;
 }
 
-.theme-selector input:checked + span {
+.theme-selector .theme-option::before {
+    width: 18px;
+    height: 18px;
+    background: currentColor;
+    content: "";
+    -webkit-mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-position: center;
+    mask-repeat: no-repeat;
+    mask-size: contain;
+}
+
+.theme-selector .theme-option-light::before {
+    -webkit-mask-image: url("/icons/sun.svg");
+    mask-image: url("/icons/sun.svg");
+}
+
+.theme-selector .theme-option-dark::before {
+    -webkit-mask-image: url("/icons/moon.svg");
+    mask-image: url("/icons/moon.svg");
+}
+
+.theme-selector input:checked + .theme-option {
     background: #075e54;
     color: #ffffff;
 }
 
-.theme-selector input:focus-visible + span {
+.theme-selector input:focus-visible + .theme-option {
     outline: 3px solid #d8eee7;
     outline-offset: 1px;
 }
@@ -338,16 +367,16 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
     color: #f3f0e8;
 }
 
-:root[data-theme="dark"] .theme-selector span {
+:root[data-theme="dark"] .theme-selector .theme-option {
     color: #c9c3b8;
 }
 
-:root[data-theme="dark"] .theme-selector input:checked + span {
+:root[data-theme="dark"] .theme-selector input:checked + .theme-option {
     background: #5bd0b2;
     color: #10201d;
 }
 
-:root[data-theme="dark"] .theme-selector input:focus-visible + span,
+:root[data-theme="dark"] .theme-selector input:focus-visible + .theme-option,
 :root[data-theme="dark"] .repo-picker input:focus {
     outline-color: rgba(91, 208, 178, 0.28);
 }

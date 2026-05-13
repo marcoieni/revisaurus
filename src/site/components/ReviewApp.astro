@@ -28,11 +28,13 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
         <legend>Color mode</legend>
         <label>
           <input type="radio" name="theme" value="light" />
-          <span>Light</span>
+          <span class="theme-option theme-option-light" aria-hidden="true"></span>
+          <span class="sr-only">Light mode</span>
         </label>
         <label>
           <input type="radio" name="theme" value="dark" />
-          <span>Dark</span>
+          <span class="theme-option theme-option-dark" aria-hidden="true"></span>
+          <span class="sr-only">Dark mode</span>
         </label>
       </fieldset>
       <RepositoryPicker repositories={repositories} initialRepo={initialRepo} />
