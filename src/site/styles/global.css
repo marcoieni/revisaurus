@@ -194,6 +194,33 @@ h1 {
     border-top: 1px solid #e7e1d6;
 }
 
+.diff-collapse-toggle {
+    width: 28px;
+    height: 28px;
+    display: inline-grid;
+    place-items: center;
+    appearance: none;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    padding: 0;
+    cursor: pointer;
+}
+
+.diff-collapse-toggle:hover {
+    background: rgba(93, 89, 104, 0.12);
+}
+
+.diff-collapse-toggle svg {
+    fill: currentColor;
+    transition: transform 150ms ease;
+}
+
+diffs-container[data-collapsed] .diff-collapse-toggle svg {
+    transform: rotate(-90deg);
+}
+
 .review-comment {
     font-family: inherit;
     padding: 10px 12px;
