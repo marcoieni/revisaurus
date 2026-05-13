@@ -13,7 +13,7 @@ export class GitHubProvider implements RepositoryProvider {
         const response = await this.#client.rest.pulls.list({
             owner: repo.owner,
             repo: repo.repo,
-            state: "all",
+            state: "open",
             sort: "updated",
             direction: "desc",
             per_page: Math.min(repo.maxPullRequests * 3, 100),
