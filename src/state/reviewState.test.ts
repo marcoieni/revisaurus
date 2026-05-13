@@ -1,0 +1,62 @@
+import { mkdtemp } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { describe, expect, it } from "vitest";
+import { emptyState, loadState, reviewKey, saveState } from "./reviewState.js";
+import type { PullRequestSummary, ReviewState } from "../types/revisaurus.js";
+
+describe("reviewState", () => {
+    it("creates an empty versioned state", () => {
+        expect(emptyState()).toEqual({ version: 1, reviews: {} });
+    });
+
+    it("returns an empty state when no state file exists", async () => {
+        const dir = await mkdtemp(join(tmpdir(), "revisaurus-state-"));
+
+        await expect(loadState(join(dir, "missing.json"))).resolves.toEqual(emptyState());
+    });
+
+    it("saves and loads review state JSON", async () => {
+        const dir = await mkdtemp(join(tmpdir(), "revisaurus-state-"));
+        const path = join(dir, "state.json");
+        const state: ReviewState = {
+            version: 1,
+            reviews: {
+                "github:repo:7:abc": {
+                    repoId: "repo",
+                    pullRequest: pullRequest(),
+                    status: "reviewed",
+                    reviewedCommit: "abc",
+                    reviewedAt: "2026-01-01T00:00:00.000Z",
+                    summary: "Looks good.",
+                    rawOutput: "",
+                    diff: "",
+                    comments: [],
+                },
+            },
+        };
+
+        await saveState(path, state);
+
+        await expect(loadState(path)).resolves.toEqual(state);
+    });
+
+    it("keys reviews by provider, repository, pull request number, and head SHA", () => {
+        expect(reviewKey(pullRequest())).toBe("github:repo:7:abc");
+    });
+});
+
+function pullRequest(overrides: Partial<PullRequestSummary> = {}): PullRequestSummary {
+    return {
+        provider: "github",
+        repoId: "repo",
+        number: 7,
+        title: "Update dependency",
+        url: "https://github.com/example/repo/pull/7",
+        author: "alice",
+        headSha: "abc",
+        baseSha: "def",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+        ...overrides,
+    };
+}
