@@ -63,6 +63,8 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
                 continue;
             }
 
+            console.log(`Reviewing ${repo.name} PR #${pullRequest.number}: ${pullRequest.title}`);
+
             const diff = await provider.getPullRequestDiff(repo, pullRequest.number);
             const reviewedAt = new Date().toISOString();
 
