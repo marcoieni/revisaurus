@@ -34,7 +34,7 @@ skipped_authors = ["renovate", "renovate[bot]", "dependabot", "dependabot[bot]"]
 [reviewer]
 kind = "kiro"
 command = "kiro-cli"
-model = "auto"
+model = "claude-opus-4.7"
 trust_tools = "read,grep"
 timeout_seconds = 900
 
