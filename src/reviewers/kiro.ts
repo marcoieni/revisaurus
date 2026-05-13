@@ -47,7 +47,7 @@ Return only JSON with this exact shape:
   ]
 }
 
-Use "right" for added/new lines and "left" for removed/old lines. Only include comments tied to specific diff lines.
+Use "right" for added/new lines and "left" for removed/old lines. Tie all comments to specific diff lines (even if the line isn't related to the comment sometimes).
 
 Diff:
 ${request.diff}`;
