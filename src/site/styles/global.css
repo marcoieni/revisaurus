@@ -36,6 +36,7 @@ a {
 
 .topbar {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     gap: 24px;
     align-items: end;
@@ -44,10 +45,18 @@ a {
     background: #fffdf8;
 }
 
+.topbar > div:first-child {
+    min-width: 0;
+}
+
 .topbar-controls {
     display: flex;
+    flex: 1 1 520px;
+    flex-wrap: wrap;
     gap: 16px;
     align-items: end;
+    justify-content: end;
+    min-width: 0;
 }
 
 h1,
@@ -123,7 +132,9 @@ h1 {
     position: relative;
     display: grid;
     gap: 6px;
-    min-width: min(360px, 100%);
+    flex: 1 1 320px;
+    min-width: min(260px, 100%);
+    max-width: 360px;
 }
 
 .repo-picker label {
@@ -256,6 +267,8 @@ h1 {
 
 .diff-view {
     border-top: 1px solid #e7e1d6;
+    max-width: 100%;
+    overflow-x: auto;
 }
 
 .diff-collapse-toggle {
@@ -392,5 +405,9 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
     .reviews {
         padding-left: 16px;
         padding-right: 16px;
+    }
+
+    .repo-picker {
+        max-width: none;
     }
 }
