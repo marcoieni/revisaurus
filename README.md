@@ -57,6 +57,7 @@ The generated Astro site uses [`@pierre/diffs`](https://diffs.com/) to render pu
 
 ## Icons
 
-The site uses the following icons from [lucide.dev](https://lucide.dev/):
+The site uses the following icons from [lucide.dev](https://lucide.dev):
+
 - `public/icons/moon.svg`
 - `public/icons/sun.svg`
