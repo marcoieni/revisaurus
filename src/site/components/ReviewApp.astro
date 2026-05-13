@@ -6,6 +6,14 @@ const { data } = Astro.props;
 const repositories = data.repositories as Array<Pick<RepositoryConfig, "id" | "name" | "provider" | "url">>;
 const reviews = data.reviews as PullRequestReview[];
 const initialRepo = data.repositories[0]?.id ?? "";
+
+function getAuthorUrl(review: PullRequestReview): string | undefined {
+  if (review.pullRequest.provider !== "github" || review.pullRequest.author === "unknown") {
+    return undefined;
+  }
+
+  return `https://github.com/${encodeURIComponent(review.pullRequest.author)}`;
+}
 ---
 
 <main class="app-shell">
@@ -30,27 +38,35 @@ const initialRepo = data.repositories[0]?.id ?? "";
           </div>
           {reviews
             .filter((review) => review.repoId === repo.id)
-            .map((review) => (
-              <article class="review">
-                <header class="review-header">
-                  <div>
-                    <a href={review.pullRequest.url}>#{review.pullRequest.number} {review.pullRequest.title}</a>
-                    <p>
-                      {review.pullRequest.author} · {review.status} · {review.reviewedCommit.slice(0, 8)}
-                    </p>
+            .map((review) => {
+              const authorUrl = getAuthorUrl(review);
+
+              return (
+                <article class="review">
+                  <header class="review-header">
+                    <div>
+                      <a href={review.pullRequest.url}>#{review.pullRequest.number} {review.pullRequest.title}</a>
+                      <p>
+                        {authorUrl ? (
+                          <a class="review-author" href={authorUrl}>{review.pullRequest.author}</a>
+                        ) : (
+                          review.pullRequest.author
+                        )} · {review.status} · {review.reviewedCommit.slice(0, 8)}
+                      </p>
+                    </div>
+                    <time datetime={review.reviewedAt}>{new Date(review.reviewedAt).toLocaleString()}</time>
+                  </header>
+                  <div class="summary">{review.summary}</div>
+                  {review.error && <pre class="error">{review.error}</pre>}
+                  <div
+                    class="diff-view"
+                    data-patch={encodeURIComponent(review.diff)}
+                    data-comments={encodeURIComponent(JSON.stringify(review.comments))}
+                  >
                   </div>
-                  <time datetime={review.reviewedAt}>{new Date(review.reviewedAt).toLocaleString()}</time>
-                </header>
-                <div class="summary">{review.summary}</div>
-                {review.error && <pre class="error">{review.error}</pre>}
-                <div
-                  class="diff-view"
-                  data-patch={encodeURIComponent(review.diff)}
-                  data-comments={encodeURIComponent(JSON.stringify(review.comments))}
-                >
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
         </section>
       ))
     }
