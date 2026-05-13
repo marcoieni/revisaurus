@@ -138,12 +138,6 @@ h1 {
     font-weight: 700;
 }
 
-.repo-options small {
-    color: #666052;
-    font-size: 12px;
-    font-weight: 400;
-}
-
 .reviews {
     max-width: 1360px;
     margin: 0 auto;

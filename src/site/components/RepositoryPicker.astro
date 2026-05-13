@@ -44,7 +44,6 @@ const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
           aria-selected={repo.id === initialRepo ? "true" : "false"}
         >
           <span>{repositoryLabel(repo)}</span>
-          <small>{repo.id}</small>
         </button>
       ))
     }
