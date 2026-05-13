@@ -53,6 +53,7 @@ skipped_authors = ["bot"]
 [reviewer]
 kind = "codex"
 command = "codex"
+model = "claude-sonnet-4.5"
 trust_tools = "read"
 timeout_seconds = 120
 
@@ -71,6 +72,7 @@ branch = "main"
             reviewer: {
                 kind: "codex",
                 command: "codex",
+                model: "claude-sonnet-4.5",
                 trustTools: "read",
                 timeoutSeconds: 120,
             },
