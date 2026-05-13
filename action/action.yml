@@ -1,0 +1,40 @@
+name: Revisaurus
+description: Generate a static Revisaurus PR review website.
+inputs:
+  config:
+    description: Path to the revisaurus TOML config file.
+    required: false
+    default: revisaurus.toml
+  node-version:
+    description: Node.js version used to run Revisaurus.
+    required: false
+    default: "24"
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: pnpm
+    - name: Set up pnpm
+      uses: pnpm/action-setup@v5
+      with:
+        run_install: false
+    - name: Install Kiro CLI
+      shell: bash
+      run: curl -fsSL https://cli.kiro.dev/install | bash
+    # TODO: probably there's a way to avoid installing dependencies when running the action.
+    #       I.e. the action start in a more advanced state. So that it's faster.
+    - name: Install dependencies
+      shell: bash
+      run: pnpm --dir "${GITHUB_ACTION_PATH}/.." install --frozen-lockfile
+    - name: Build Revisaurus
+      shell: bash
+      run: pnpm --dir "${GITHUB_ACTION_PATH}/.." build
+    - name: Generate Revisaurus site
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        KIRO_API_KEY: ${{ env.KIRO_API_KEY }}
+      run: node "${GITHUB_ACTION_PATH}/../dist/cli/index.js" generate --config "${{ inputs.config }}"

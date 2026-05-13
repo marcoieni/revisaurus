@@ -1,0 +1,16 @@
+output_dir = "site-dist"
+data_dir = ".revisaurus/data"
+max_pull_requests = 10
+skipped_authors = ["renovate", "renovate[bot]", "dependabot", "dependabot[bot]"]
+
+[reviewer]
+kind = "kiro"
+command = "kiro-cli"
+trust_tools = "read,grep"
+timeout_seconds = 900
+
+[[repositories]]
+name = "Astro"
+provider = "github"
+url = "https://github.com/withastro/astro"
+max_pull_requests = 5
