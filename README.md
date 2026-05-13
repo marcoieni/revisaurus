@@ -54,3 +54,9 @@ See [docs/github-action.md](docs/github-action.md) for a workflow using the comp
 ## Diff Rendering
 
 The generated Astro site uses [`@pierre/diffs`](https://diffs.com/) to render pull request patches and line-specific AI review comments.
+
+## Icons
+
+The site uses the following icons from [lucide.dev](https://lucide.dev/):
+- `public/icons/moon.svg`
+- `public/icons/sun.svg`
