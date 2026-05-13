@@ -1,10 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { parse } from "smol-toml";
 import { z } from "zod";
-import type {
-    RepositoryConfig,
-    RevisaurusConfig,
-} from "../types/revisaurus.js";
+import type { RepositoryConfig, RevisaurusConfig } from "../types/revisaurus.js";
 
 const repositorySchema = z.object({
     id: z.string().optional(),
@@ -20,14 +17,7 @@ const configSchema = z.object({
     output_dir: z.string().default("site-dist"),
     data_dir: z.string().default(".revisaurus/data"),
     max_pull_requests: z.number().int().positive().default(10),
-    skipped_authors: z
-        .array(z.string())
-        .default([
-            "renovate",
-            "renovate[bot]",
-            "dependabot",
-            "dependabot[bot]",
-        ]),
+    skipped_authors: z.array(z.string()).default(["renovate", "renovate[bot]", "dependabot", "dependabot[bot]"]),
     reviewer: z
         .object({
             kind: z.enum(["kiro", "codex"]).default("kiro"),
@@ -44,9 +34,7 @@ export async function loadConfig(path: string): Promise<RevisaurusConfig> {
     const parsed = configSchema.parse(parse(source));
     const repositories = parsed.repositories.map((repo): RepositoryConfig => {
         const github = parseGitHubUrl(repo.url);
-        const id =
-            repo.id ??
-            `${repo.provider}-${github.owner}-${github.repo}`.toLowerCase();
+        const id = repo.id ?? `${repo.provider}-${github.owner}-${github.repo}`.toLowerCase();
 
         return {
             id,
@@ -77,12 +65,9 @@ export async function loadConfig(path: string): Promise<RevisaurusConfig> {
 }
 
 function parseGitHubUrl(url: string): { owner: string; repo: string } {
-    const match =
-        /^https:\/\/github\.com\/([^/]+)\/([^/.]+)(?:\.git)?\/?$/.exec(url);
+    const match = /^https:\/\/github\.com\/([^/]+)\/([^/.]+)(?:\.git)?\/?$/.exec(url);
     if (!match) {
-        throw new Error(
-            `Only GitHub repository URLs are supported today: ${url}`,
-        );
+        throw new Error(`Only GitHub repository URLs are supported today: ${url}`);
     }
 
     return { owner: match[1], repo: match[2] };

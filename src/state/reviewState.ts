@@ -13,10 +13,7 @@ export async function loadState(path: string): Promise<ReviewState> {
     return (await readJson(path)) as ReviewState;
 }
 
-export async function saveState(
-    path: string,
-    state: ReviewState,
-): Promise<void> {
+export async function saveState(path: string, state: ReviewState): Promise<void> {
     await writeJson(path, state, { spaces: 2 });
 }
 

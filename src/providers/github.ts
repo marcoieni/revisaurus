@@ -1,9 +1,6 @@
 import { Octokit } from "octokit";
 import type { RepositoryProvider } from "./provider.js";
-import type {
-    PullRequestSummary,
-    RepositoryConfig,
-} from "../types/revisaurus.js";
+import type { PullRequestSummary, RepositoryConfig } from "../types/revisaurus.js";
 
 export class GitHubProvider implements RepositoryProvider {
     #client: Octokit;
@@ -12,9 +9,7 @@ export class GitHubProvider implements RepositoryProvider {
         this.#client = new Octokit(token ? { auth: token } : {});
     }
 
-    async listRecentlyUpdatedPullRequests(
-        repo: RepositoryConfig,
-    ): Promise<PullRequestSummary[]> {
+    async listRecentlyUpdatedPullRequests(repo: RepositoryConfig): Promise<PullRequestSummary[]> {
         const response = await this.#client.rest.pulls.list({
             owner: repo.owner,
             repo: repo.repo,
@@ -24,9 +19,7 @@ export class GitHubProvider implements RepositoryProvider {
             per_page: Math.min(repo.maxPullRequests * 3, 100),
         });
 
-        const skipped = new Set(
-            repo.skippedAuthors.map((author) => author.toLowerCase()),
-        );
+        const skipped = new Set(repo.skippedAuthors.map((author) => author.toLowerCase()));
 
         return response.data
             .filter((pr) => !skipped.has((pr.user?.login ?? "").toLowerCase()))
@@ -45,10 +38,7 @@ export class GitHubProvider implements RepositoryProvider {
             }));
     }
 
-    async getPullRequestDiff(
-        repo: RepositoryConfig,
-        pullRequestNumber: number,
-    ): Promise<string> {
+    async getPullRequestDiff(repo: RepositoryConfig, pullRequestNumber: number): Promise<string> {
         const response = await this.#client.rest.pulls.get({
             owner: repo.owner,
             repo: repo.repo,

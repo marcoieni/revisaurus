@@ -2,9 +2,7 @@ import { FileDiff, parsePatchFiles } from "@pierre/diffs";
 
 for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
     const patch = decodeURIComponent(container.dataset.patch ?? "");
-    const comments = JSON.parse(
-        decodeURIComponent(container.dataset.comments ?? "[]"),
-    ) as Array<{
+    const comments = JSON.parse(decodeURIComponent(container.dataset.comments ?? "[]")) as Array<{
         path: string;
         line: number;
         side: "left" | "right";
@@ -33,17 +31,10 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
                 fileDiff,
                 fileContainer: element,
                 lineAnnotations: comments
-                    .filter(
-                        (comment) =>
-                            comment.path === fileDiff.name ||
-                            comment.path === fileDiff.prevName,
-                    )
+                    .filter((comment) => comment.path === fileDiff.name || comment.path === fileDiff.prevName)
                     .map((comment) => ({
                         lineNumber: comment.line,
-                        side:
-                            comment.side === "right"
-                                ? "additions"
-                                : "deletions",
+                        side: comment.side === "right" ? "additions" : "deletions",
                         metadata: {
                             severity: comment.severity,
                             body: comment.body,
@@ -58,10 +49,7 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
 }
 
 function escapeHtml(value: string): string {
-    return value
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;");
+    return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
 interface ReviewAnnotation {

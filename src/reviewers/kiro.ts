@@ -9,12 +9,7 @@ export class KiroReviewer implements Reviewer {
         const prompt = buildPrompt(request);
         const { stdout } = await execa(
             this.config.command,
-            [
-                "chat",
-                "--no-interactive",
-                `--trust-tools=${this.config.trustTools}`,
-                prompt,
-            ],
+            ["chat", "--no-interactive", `--trust-tools=${this.config.trustTools}`, prompt],
             {
                 timeout: this.config.timeoutSeconds * 1000,
                 env: process.env,

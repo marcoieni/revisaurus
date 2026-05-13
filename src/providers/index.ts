@@ -8,8 +8,6 @@ export function providerFor(repo: RepositoryConfig): RepositoryProvider {
             return new GitHubProvider();
         case "gitlab":
         case "forgejo":
-            throw new Error(
-                `${repo.provider} provider is planned but not implemented yet.`,
-            );
+            throw new Error(`${repo.provider} provider is planned but not implemented yet.`);
     }
 }

@@ -7,8 +7,6 @@ export function reviewerFor(config: ReviewerConfig): Reviewer {
         case "kiro":
             return new KiroReviewer(config);
         case "codex":
-            throw new Error(
-                "Codex reviewer support is planned but not implemented yet.",
-            );
+            throw new Error("Codex reviewer support is planned but not implemented yet.");
     }
 }

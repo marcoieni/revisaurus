@@ -9,9 +9,7 @@ export default defineConfig({
             "import.meta.env.REVISAURUS_DATA_DIR": JSON.stringify(
                 process.env.REVISAURUS_DATA_DIR ?? ".revisaurus/data",
             ),
-            "import.meta.env.REVISAURUS_WORKSPACE": JSON.stringify(
-                process.env.REVISAURUS_WORKSPACE ?? process.cwd(),
-            ),
+            "import.meta.env.REVISAURUS_WORKSPACE": JSON.stringify(process.env.REVISAURUS_WORKSPACE ?? process.cwd()),
         },
     },
 });
