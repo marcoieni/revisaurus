@@ -60,17 +60,33 @@ const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
   let visibleOptions = [...options];
   let activeIndex = visibleOptions.findIndex((option) => option.getAttribute("aria-selected") === "true");
 
-  const fuzzyMatches = (value: string, query: string) => {
-    let cursor = 0;
+  const fuzzyScore = (value: string, query: string) => {
+    const normalizedQuery = query.toLowerCase();
     const normalizedValue = value.toLowerCase();
 
-    for (const character of query.toLowerCase()) {
-      cursor = normalizedValue.indexOf(character, cursor);
-      if (cursor === -1) return false;
-      cursor += 1;
+    if (normalizedValue === normalizedQuery) return 0;
+
+    const tokenIndex = normalizedValue.split(/[^a-z0-9]+/).findIndex((token) => token.startsWith(normalizedQuery));
+    if (tokenIndex !== -1) return 5 + tokenIndex;
+
+    const startsAt = normalizedValue.indexOf(normalizedQuery);
+    if (startsAt !== -1) return 10 + startsAt;
+
+    let cursor = 0;
+    let firstMatch = -1;
+    let lastMatch = -1;
+    let gaps = 0;
+
+    for (const character of normalizedQuery) {
+      const matchIndex = normalizedValue.indexOf(character, cursor);
+      if (matchIndex === -1) return Number.POSITIVE_INFINITY;
+      if (lastMatch !== -1) gaps += matchIndex - lastMatch - 1;
+      if (firstMatch === -1) firstMatch = matchIndex;
+      lastMatch = matchIndex;
+      cursor = matchIndex + 1;
     }
 
-    return true;
+    return 100 + firstMatch * 2 + gaps * 10;
   };
 
   const setOpen = (open: boolean) => {
@@ -103,11 +119,20 @@ const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
     if (!input) return;
 
     const query = queryOverride ?? input.value.trim();
-    visibleOptions = options.filter((option) => {
-      const search = option.dataset.repoSearch ?? "";
-      const matches = query === "" || fuzzyMatches(search, query);
+    visibleOptions = options
+      .map((option, index) => {
+        const search = option.dataset.repoSearch ?? "";
+        const score = query === "" ? index : fuzzyScore(search, query);
+        return { index, option, score };
+      })
+      .filter(({ score }) => Number.isFinite(score))
+      .sort((first, second) => first.score - second.score || first.index - second.index)
+      .map(({ option }) => option);
+
+    [...visibleOptions, ...options.filter((option) => !visibleOptions.includes(option))].forEach((option) => {
+      const matches = visibleOptions.includes(option);
       option.hidden = !matches;
-      return matches;
+      listbox?.append(option);
     });
 
     setActive(visibleOptions.length > 0 ? 0 : -1);
