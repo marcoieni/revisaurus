@@ -1,5 +1,6 @@
 ---
 import type { PullRequestReview, RepositoryConfig } from "../../types/revisaurus.js";
+import RepositoryPicker from "./RepositoryPicker.astro";
 
 const { data } = Astro.props;
 const repositories = data.repositories as Array<Pick<RepositoryConfig, "id" | "name" | "provider" | "url">>;
@@ -13,13 +14,7 @@ const initialRepo = data.repositories[0]?.id ?? "";
       <h1>Revisaurus</h1>
       <p>AI pull request reviews generated from recent repository activity.</p>
     </div>
-    <div class="repo-picker">
-      <label for="repo-search">Repository</label>
-      <input id="repo-search" type="search" list="repo-options" value={initialRepo} autocomplete="off" />
-      <datalist id="repo-options">
-        {repositories.map((repo) => <option value={repo.id}>{repo.name}</option>)}
-      </datalist>
-    </div>
+    <RepositoryPicker repositories={repositories} initialRepo={initialRepo} />
   </header>
 
   <section class="reviews" id="reviews">
@@ -65,17 +60,11 @@ const initialRepo = data.repositories[0]?.id ?? "";
 <script>
   import "../runtime/diffs.js";
 
-  const input = document.querySelector<HTMLInputElement>("#repo-search");
   const sections = [...document.querySelectorAll<HTMLElement>(".repo-section")];
-
-  input?.addEventListener("input", () => {
-    const query = input.value.toLowerCase();
-    const exact = sections.find((section) => section.dataset.repo === input.value);
-    const fuzzy = sections.find((section) => section.dataset.repo?.toLowerCase().includes(query));
-    const selected = exact ?? fuzzy ?? sections[0];
-
+  document.addEventListener("repo:selected", (event) => {
+    const selectedRepo = event instanceof CustomEvent ? event.detail.repoId : "";
     for (const section of sections) {
-      section.hidden = section !== selected;
+      section.hidden = section.dataset.repo !== selectedRepo;
     }
   });
 </script>
