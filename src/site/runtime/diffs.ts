@@ -4,7 +4,18 @@ import {
     parsePatchFiles,
     type DiffLineAnnotation,
     type FileDiffMetadata,
+    type ThemeTypes,
 } from "@pierre/diffs";
+
+const diffs: FileDiff<ReviewAnnotation>[] = [];
+const currentTheme = getCurrentTheme();
+
+document.addEventListener("theme:selected", (event) => {
+    const theme = event instanceof CustomEvent && isThemeType(event.detail?.theme) ? event.detail.theme : getCurrentTheme();
+    for (const diff of diffs) {
+        diff.setThemeType(theme);
+    }
+});
 
 for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
     const patch = decodeURIComponent(container.dataset.patch ?? "");
@@ -39,6 +50,11 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
             diff = new FileDiff<ReviewAnnotation>({
                 collapsed,
                 diffStyle: "split",
+                theme: {
+                    light: "pierre-light",
+                    dark: "pierre-dark",
+                },
+                themeType: currentTheme,
                 unsafeCSS: "::slotted([data-annotation-slot]) { color: #171717; }",
                 renderHeaderPrefix(): HTMLButtonElement {
                     return createCollapseButton({
@@ -57,6 +73,7 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
                     return node;
                 },
             });
+            diffs.push(diff);
 
             diff.render({
                 fileDiff,
@@ -68,6 +85,19 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
     }
 
     container.replaceChildren(fragment);
+}
+
+function getCurrentTheme(): ThemeTypes {
+    const theme = document.documentElement.dataset.theme;
+    if (isThemeType(theme)) {
+        return theme;
+    }
+
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function isThemeType(value: unknown): value is ThemeTypes {
+    return value === "light" || value === "dark";
 }
 
 function escapeHtml(value: string): string {
