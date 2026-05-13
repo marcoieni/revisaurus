@@ -23,7 +23,22 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
       <h1>Revisaurus</h1>
       <p>AI pull request reviews generated from recent repository activity.</p>
     </div>
-    <RepositoryPicker repositories={repositories} initialRepo={initialRepo} />
+    <div class="topbar-controls">
+      <fieldset class="theme-selector" aria-label="Color mode">
+        <legend>Color mode</legend>
+        <label>
+          <input type="radio" name="theme" value="light" />
+          <span class="theme-option theme-option-light" aria-hidden="true"></span>
+          <span class="sr-only">Light mode</span>
+        </label>
+        <label>
+          <input type="radio" name="theme" value="dark" />
+          <span class="theme-option theme-option-dark" aria-hidden="true"></span>
+          <span class="sr-only">Dark mode</span>
+        </label>
+      </fieldset>
+      <RepositoryPicker repositories={repositories} initialRepo={initialRepo} />
+    </div>
   </header>
 
   <section class="reviews" id="reviews">
@@ -77,6 +92,40 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
   import "../runtime/diffs.js";
 
   const sections = [...document.querySelectorAll<HTMLElement>(".repo-section")];
+  const themeSelector = document.querySelector<HTMLElement>(".theme-selector");
+  const themeInputs = [...document.querySelectorAll<HTMLInputElement>('input[name="theme"]')];
+  type ColorMode = "light" | "dark";
+
+  const isColorMode = (value: string | null): value is ColorMode => value === "light" || value === "dark";
+  const getInitialTheme = (): ColorMode => {
+    const storedTheme = localStorage.getItem("revisaurus:theme");
+    if (isColorMode(storedTheme)) {
+      return storedTheme;
+    }
+
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  };
+
+  const applyTheme = (theme: ColorMode) => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("revisaurus:theme", theme);
+    themeSelector?.setAttribute("aria-label", `Color mode: ${theme}`);
+    for (const input of themeInputs) {
+      input.checked = input.value === theme;
+    }
+    document.dispatchEvent(new CustomEvent("theme:selected", { detail: { theme } }));
+  };
+
+  applyTheme(getInitialTheme());
+
+  for (const input of themeInputs) {
+    input.addEventListener("change", () => {
+      if (input.checked && isColorMode(input.value)) {
+        applyTheme(input.value);
+      }
+    });
+  }
+
   document.addEventListener("repo:selected", (event) => {
     const selectedRepo = event instanceof CustomEvent ? event.detail.repoId : "";
     for (const section of sections) {

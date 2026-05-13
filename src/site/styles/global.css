@@ -1,5 +1,5 @@
 :root {
-    color-scheme: light dark;
+    color-scheme: light;
     font-family:
         Inter,
         ui-sans-serif,
@@ -12,6 +12,12 @@
     color: #171717;
 }
 
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    background: #15181b;
+    color: #f3f0e8;
+}
+
 body {
     margin: 0;
 }
@@ -20,18 +26,37 @@ a {
     color: #075e54;
 }
 
+:root[data-theme="dark"] a {
+    color: #5bd0b2;
+}
+
 .app-shell {
     min-height: 100vh;
 }
 
 .topbar {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     gap: 24px;
     align-items: end;
     padding: 28px 32px;
     border-bottom: 1px solid #d9d3c6;
     background: #fffdf8;
+}
+
+.topbar > div:first-child {
+    min-width: 0;
+}
+
+.topbar-controls {
+    display: flex;
+    flex: 1 1 520px;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: end;
+    justify-content: end;
+    min-width: 0;
 }
 
 h1,
@@ -49,11 +74,96 @@ h1 {
     color: #666052;
 }
 
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.theme-selector {
+    display: inline-grid;
+    grid-template-columns: repeat(2, 36px);
+    gap: 2px;
+    height: 40px;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 2px;
+    border: 1px solid #bdb4a4;
+    border-radius: 6px;
+    background: #ffffff;
+}
+
+.theme-selector legend {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.theme-selector label {
+    display: grid;
+}
+
+.theme-selector input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.theme-selector .theme-option {
+    display: grid;
+    min-width: 0;
+    place-items: center;
+    border-radius: 4px;
+    color: #5d5968;
+    cursor: pointer;
+}
+
+.theme-selector .theme-option::before {
+    width: 18px;
+    height: 18px;
+    background: currentColor;
+    content: "";
+    -webkit-mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-position: center;
+    mask-repeat: no-repeat;
+    mask-size: contain;
+}
+
+.theme-selector .theme-option-light::before {
+    -webkit-mask-image: url("/icons/sun.svg");
+    mask-image: url("/icons/sun.svg");
+}
+
+.theme-selector .theme-option-dark::before {
+    -webkit-mask-image: url("/icons/moon.svg");
+    mask-image: url("/icons/moon.svg");
+}
+
+.theme-selector input:checked + .theme-option {
+    background: #075e54;
+    color: #ffffff;
+}
+
+.theme-selector input:focus-visible + .theme-option {
+    outline: 3px solid #d8eee7;
+    outline-offset: 1px;
+}
+
 .repo-picker {
     position: relative;
     display: grid;
     gap: 6px;
-    min-width: min(360px, 100%);
+    flex: 1 1 320px;
+    min-width: min(260px, 100%);
+    max-width: 360px;
 }
 
 .repo-picker label {
@@ -186,6 +296,8 @@ h1 {
 
 .diff-view {
     border-top: 1px solid #e7e1d6;
+    max-width: 100%;
+    overflow-x: auto;
 }
 
 .diff-collapse-toggle {
@@ -237,8 +349,82 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
     background: #fff7ed;
 }
 
+:root[data-theme="dark"] .topbar {
+    border-bottom-color: #343940;
+    background: #1d2126;
+}
+
+:root[data-theme="dark"] .topbar p,
+:root[data-theme="dark"] .review-header p {
+    color: #b7b0a4;
+}
+
+:root[data-theme="dark"] .theme-selector,
+:root[data-theme="dark"] .repo-picker input,
+:root[data-theme="dark"] .repo-options {
+    border-color: #525a64;
+    background: #232830;
+    color: #f3f0e8;
+}
+
+:root[data-theme="dark"] .theme-selector .theme-option {
+    color: #c9c3b8;
+}
+
+:root[data-theme="dark"] .theme-selector input:checked + .theme-option {
+    background: #5bd0b2;
+    color: #10201d;
+}
+
+:root[data-theme="dark"] .theme-selector input:focus-visible + .theme-option,
+:root[data-theme="dark"] .repo-picker input:focus {
+    outline-color: rgba(91, 208, 178, 0.28);
+}
+
+:root[data-theme="dark"] .repo-picker input:focus {
+    border-color: #5bd0b2;
+}
+
+:root[data-theme="dark"] .repo-combobox-toggle {
+    border-left-color: #343940;
+    color: #c9c3b8;
+}
+
+:root[data-theme="dark"] .repo-options {
+    box-shadow: 0 14px 30px rgb(0 0 0 / 32%);
+}
+
+:root[data-theme="dark"] .repo-options button {
+    color: #f3f0e8;
+}
+
+:root[data-theme="dark"] .repo-options button:hover,
+:root[data-theme="dark"] .repo-options button.active {
+    background: #18362f;
+}
+
+:root[data-theme="dark"] .repo-options button[aria-selected="true"],
+:root[data-theme="dark"] .repo-heading span {
+    color: #5bd0b2;
+}
+
+:root[data-theme="dark"] .review {
+    border-color: #343940;
+    background: #1d2126;
+}
+
+:root[data-theme="dark"] .review-header,
+:root[data-theme="dark"] .diff-view {
+    border-color: #343940;
+}
+
+:root[data-theme="dark"] .error {
+    color: #fca5a5;
+}
+
 @media (max-width: 760px) {
     .topbar,
+    .topbar-controls,
     .repo-heading,
     .review-header {
         display: grid;
@@ -248,5 +434,9 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
     .reviews {
         padding-left: 16px;
         padding-right: 16px;
+    }
+
+    .repo-picker {
+        max-width: none;
     }
 }
