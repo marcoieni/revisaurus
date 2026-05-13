@@ -37,7 +37,8 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
   const statePath = path.join(dataDir, "state.json");
   const state = await loadState(statePath);
   const reviewer = reviewerFor(config.reviewer);
-  const reviews: PullRequestReview[] = [];
+  // Tracks the current run's site payload while state.reviews remains the full cache.
+  const reviewKeys: string[] = [];
 
   for (const repo of config.repositories) {
     const provider = providerFor(repo);
@@ -45,9 +46,10 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
 
     for (const pullRequest of pullRequests) {
       const key = reviewKey(pullRequest);
-      const cached = state.reviews[key];
-      if (cached) {
-        reviews.push(cached);
+      reviewKeys.push(key);
+
+      const isCached = Boolean(state.reviews[key]);
+      if (isCached) {
         continue;
       }
 
@@ -72,7 +74,6 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
           comments: result.comments,
         };
         state.reviews[key] = review;
-        reviews.push(review);
       } catch (error) {
         const review: PullRequestReview = {
           repoId: repo.id,
@@ -87,7 +88,6 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
           error: error instanceof Error ? error.message : String(error),
         };
         state.reviews[key] = review;
-        reviews.push(review);
       }
 
       await saveState(statePath, state);
@@ -99,7 +99,9 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
     {
       generatedAt: new Date().toISOString(),
       repositories: config.repositories.map(({ id, name, provider, url }) => ({ id, name, provider, url })),
-      reviews,
+      reviews: reviewKeys
+        .map((key) => state.reviews[key])
+        .filter((review): review is PullRequestReview => Boolean(review)),
     },
     { spaces: 2 },
   );
