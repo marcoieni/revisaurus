@@ -9,6 +9,7 @@
     "scripts": {
         "build": "tsc -p tsconfig.json",
         "check": "tsc -p tsconfig.json --noEmit && astro check",
+        "demo": "tsx src/cli/index.ts demo",
         "dev": "astro dev",
         "format": "prettier --write .",
         "generate": "tsx src/cli/index.ts generate",

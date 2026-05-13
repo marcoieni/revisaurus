@@ -13,6 +13,13 @@ GITHUB_TOKEN=... KIRO_API_KEY=... pnpm generate -- --config revisaurus.toml
 pnpm dev
 ```
 
+To try the website without GitHub or reviewer credentials, generate demo data:
+
+```bash
+pnpm demo
+pnpm dev
+```
+
 ## Configuration
 
 ```toml
