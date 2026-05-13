@@ -8,11 +8,7 @@ inputs:
   node-version:
     description: Node.js version used to run Revisaurus.
     required: false
-    default: "22"
-  publish-pages:
-    description: Upload the generated site as a GitHub Pages artifact.
-    required: false
-    default: "true"
+    default: "24"
 runs:
   using: composite
   steps:
@@ -40,8 +36,3 @@ runs:
         GITHUB_TOKEN: ${{ github.token }}
         KIRO_API_KEY: ${{ env.KIRO_API_KEY }}
       run: node "${GITHUB_ACTION_PATH}/../dist/cli/index.js" generate --config "${{ inputs.config }}"
-    - name: Upload GitHub Pages artifact
-      if: ${{ inputs.publish-pages == 'true' }}
-      uses: actions/upload-pages-artifact@v5
-      with:
-        path: site-dist

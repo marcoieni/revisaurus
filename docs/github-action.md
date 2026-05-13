@@ -1,6 +1,6 @@
 # GitHub Action
 
-Revisaurus ships as a composite action. It installs Node, pnpm, Kiro CLI, runs the generator, and can upload the generated static site as the official GitHub Pages artifact.
+Revisaurus ships as a composite action. It installs Node, pnpm, Kiro CLI, and runs the generator. The generated static site is written to `site-dist`; upload or deploy that directory from your workflow.
 
 Kiro headless mode requires `KIRO_API_KEY`. Create a Kiro API key and store it as a repository secret named `KIRO_API_KEY`. Kiro documents headless mode as `kiro-cli chat --no-interactive`, with API-key auth through the `KIRO_API_KEY` environment variable.
 
@@ -30,6 +30,9 @@ jobs:
       - uses: your-org/revisaurus/action@v1
         env:
           KIRO_API_KEY: ${{ secrets.KIRO_API_KEY }}
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site-dist
 
   deploy:
     needs: build
