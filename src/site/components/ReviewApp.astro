@@ -1,9 +1,10 @@
 ---
 import type { PullRequestReview, RepositoryConfig } from "../../types/revisaurus.js";
+import { repositoryLabel } from "../repositories.js";
 import RepositoryPicker from "./RepositoryPicker.astro";
 
 const { data } = Astro.props;
-const repositories = data.repositories as Array<Pick<RepositoryConfig, "id" | "name" | "provider" | "url">>;
+const repositories = data.repositories as Array<Pick<RepositoryConfig, "id" | "name" | "provider" | "url" | "owner" | "repo">>;
 const reviews = data.reviews as PullRequestReview[];
 const initialRepo = data.repositories[0]?.id ?? "";
 
@@ -31,8 +32,7 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
         <section class="repo-section" data-repo={repo.id} hidden={repo.id !== initialRepo}>
           <div class="repo-heading">
             <div>
-              <h2>{repo.name}</h2>
-              <a href={repo.url}>{repo.url}</a>
+              <h2><a href={repo.url}>{repositoryLabel(repo)}</a></h2>
             </div>
             <span>{reviews.filter((review) => review.repoId === repo.id).length} reviews</span>
           </div>

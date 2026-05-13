@@ -140,7 +140,14 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
         path.join(dataDir, "site.json"),
         {
             generatedAt: new Date().toISOString(),
-            repositories: config.repositories.map(({ id, name, provider, url }) => ({ id, name, provider, url })),
+            repositories: config.repositories.map(({ id, name, provider, url, owner, repo }) => ({
+                id,
+                name,
+                provider,
+                url,
+                owner,
+                repo,
+            })),
             reviews: reviewKeys
                 .map((key) => state.reviews[key])
                 .filter((review): review is PullRequestReview => Boolean(review)),
@@ -180,7 +187,14 @@ async function demo(
         path.join(dataDir, "site.json"),
         {
             generatedAt: new Date().toISOString(),
-            repositories: repositories.map(({ id, name, provider, url }) => ({ id, name, provider, url })),
+            repositories: repositories.map(({ id, name, provider, url, owner, repo }) => ({
+                id,
+                name,
+                provider,
+                url,
+                owner,
+                repo,
+            })),
             reviews,
         },
         { spaces: 2 },
