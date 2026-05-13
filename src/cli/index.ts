@@ -124,7 +124,12 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
     }
 }
 
-async function demo(dataDirOption: string, outputDirOption: string, skipBuild: boolean, workspace: string): Promise<void> {
+async function demo(
+    dataDirOption: string,
+    outputDirOption: string,
+    skipBuild: boolean,
+    workspace: string,
+): Promise<void> {
     const dataDir = path.resolve(workspace, dataDirOption);
     const outputDir = path.resolve(workspace, outputDirOption);
     await ensureDir(dataDir);
