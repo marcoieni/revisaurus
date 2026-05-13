@@ -9,6 +9,10 @@ inputs:
     description: Node.js version used to run Revisaurus.
     required: false
     default: "24"
+  base-path:
+    description: Base path for generated site assets. Defaults to the repository name on GitHub Pages project sites. Use "/" for a root or custom-domain deployment.
+    required: false
+    default: ""
 runs:
   using: composite
   steps:
@@ -37,4 +41,5 @@ runs:
         GITHUB_TOKEN: ${{ github.token }}
         KIRO_API_KEY: ${{ env.KIRO_API_KEY }}
         INPUTS_CONFIG: ${{ inputs.config }}
+        REVISAURUS_BASE_PATH: ${{ inputs.base-path }}
       run: node "${GITHUB_ACTION_PATH}/../dist/cli/index.js" generate --config "${INPUTS_CONFIG}"
