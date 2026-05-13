@@ -1,6 +1,7 @@
 import { execa } from "execa";
 import type { Reviewer, ReviewRequest, ReviewResult } from "./reviewer.js";
 import type { ReviewerConfig } from "../types/revisaurus.js";
+import { stripControlCharacters } from "../utils/sanitizeText.js";
 
 export class KiroReviewer implements Reviewer {
     constructor(private readonly config: ReviewerConfig) {}
@@ -49,13 +50,19 @@ ${request.diff}`;
 }
 
 function parseReviewOutput(stdout: string): ReviewResult {
-    const json = extractJson(stdout);
+    const sanitizedOutput = stripControlCharacters(stdout);
+    const json = extractJson(sanitizedOutput);
     const parsed = JSON.parse(json) as Omit<ReviewResult, "rawOutput">;
 
     return {
-        summary: parsed.summary ?? "",
-        comments: Array.isArray(parsed.comments) ? parsed.comments : [],
-        rawOutput: stdout,
+        summary: stripControlCharacters(parsed.summary ?? ""),
+        comments: Array.isArray(parsed.comments)
+            ? parsed.comments.map((comment) => ({
+                  ...comment,
+                  body: stripControlCharacters(comment.body ?? ""),
+              }))
+            : [],
+        rawOutput: sanitizedOutput,
     };
 }
 
