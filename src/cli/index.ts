@@ -50,20 +50,32 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
     const reviewer = reviewerFor(config.reviewer);
     // Tracks the current run's site payload while state.reviews remains the full cache.
     const reviewKeys: string[] = [];
+    let cachedReviews = 0;
+    let completedReviews = 0;
+    let failedReviews = 0;
+
+    console.log(`Loaded review cache from ${statePath} with ${Object.keys(state.reviews).length} entries.`);
 
     for (const repo of config.repositories) {
         const provider = providerFor(repo);
         const pullRequests = await provider.listRecentlyUpdatedPullRequests(repo);
+        console.log(`Found ${pullRequests.length} pull requests for ${repo.name}.`);
 
         for (const pullRequest of pullRequests) {
             const key = reviewKey(pullRequest);
+            const label = `${repo.name} PR #${pullRequest.number}`;
             reviewKeys.push(key);
 
             if (isReusableReview(state.reviews[key])) {
+                cachedReviews += 1;
+                console.log(
+                    `Using cached review for ${label} at ${pullRequest.headSha.slice(0, 8)} (${state.reviews[key].status}).`,
+                );
                 continue;
             }
 
-            console.log(`Reviewing ${repo.name} PR #${pullRequest.number}: ${pullRequest.title}`);
+            console.log(`No successful cached review for ${label} at ${pullRequest.headSha.slice(0, 8)}.`);
+            console.log(`Reviewing ${label}: ${pullRequest.title}`);
 
             const diff = await provider.getPullRequestDiff(repo, pullRequest.number);
             const reviewedAt = new Date().toISOString();
@@ -86,6 +98,8 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
                     comments: result.comments,
                 };
                 state.reviews[key] = review;
+                completedReviews += 1;
+                console.log(`Review completed for ${label} with ${result.comments.length} comments.`);
             } catch (error) {
                 const review: PullRequestReview = {
                     repoId: repo.id,
@@ -100,6 +114,8 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
                     error: error instanceof Error ? error.message : String(error),
                 };
                 state.reviews[key] = review;
+                failedReviews += 1;
+                console.log(`Review failed for ${label}: ${review.error}`);
             }
 
             await saveState(statePath, state);
@@ -119,6 +135,9 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
     );
 
     await saveState(statePath, state);
+    console.log(
+        `Review run complete: ${cachedReviews} cached, ${completedReviews} reviewed, ${failedReviews} failed.`,
+    );
 
     if (!skipBuild) {
         await buildSite(config.dataDir, outputDir, workspace);
