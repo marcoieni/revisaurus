@@ -1,5 +1,5 @@
 :root {
-    color-scheme: light dark;
+    color-scheme: dark;
     font-family:
         Inter,
         ui-sans-serif,
@@ -8,8 +8,8 @@
         BlinkMacSystemFont,
         "Segoe UI",
         sans-serif;
-    background: #f7f5ef;
-    color: #171717;
+    background: #050505;
+    color: #f2f2f2;
 }
 
 body {
@@ -17,7 +17,7 @@ body {
 }
 
 a {
-    color: #075e54;
+    color: #7dd3fc;
 }
 
 .app-shell {
@@ -30,8 +30,8 @@ a {
     gap: 24px;
     align-items: end;
     padding: 28px 32px;
-    border-bottom: 1px solid #d9d3c6;
-    background: #fffdf8;
+    border-bottom: 1px solid #252525;
+    background: #0b0b0b;
 }
 
 h1,
@@ -46,7 +46,7 @@ h1 {
 
 .topbar p,
 .review-header p {
-    color: #666052;
+    color: #9b9b9b;
 }
 
 .repo-picker {
@@ -62,11 +62,12 @@ h1 {
 
 .repo-picker input {
     height: 40px;
-    border: 1px solid #bdb4a4;
+    border: 1px solid #343434;
     border-radius: 6px;
     padding: 0 12px;
     font: inherit;
-    background: #ffffff;
+    background: #111111;
+    color: #f2f2f2;
 }
 
 .reviews {
@@ -88,12 +89,12 @@ h1 {
 }
 
 .repo-heading span {
-    color: #5d5968;
+    color: #9b9b9b;
 }
 
 .review {
-    background: #ffffff;
-    border: 1px solid #ddd7cb;
+    background: #0a0a0a;
+    border: 1px solid #242424;
     border-radius: 8px;
     margin-bottom: 18px;
     overflow: hidden;
@@ -101,7 +102,7 @@ h1 {
 
 .review-header {
     padding: 16px 18px;
-    border-bottom: 1px solid #e7e1d6;
+    border-bottom: 1px solid #242424;
 }
 
 .summary {
@@ -116,14 +117,114 @@ h1 {
 }
 
 .diff-view {
-    border-top: 1px solid #e7e1d6;
+    display: grid;
+    gap: 12px;
+    border-top: 1px solid #242424;
+    padding: 12px;
+    background: #050505;
+}
+
+.diff-toolbar {
+    justify-self: start;
+    display: inline-flex;
+    gap: 0;
+    padding: 4px;
+    border: 1px solid #242424;
+    border-radius: 8px;
+    background: #202020;
+}
+
+.diff-layout-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 42px;
+    border: 0;
+    border-radius: 6px;
+    padding: 0 14px;
+    font: inherit;
+    font-weight: 700;
+    color: #999999;
+    background: transparent;
+    cursor: pointer;
+}
+
+.diff-layout-button.active {
+    color: #ffffff;
+    background: #050505;
+}
+
+.diff-layout-button:focus-visible {
+    outline: 2px solid #0ea5e9;
+    outline-offset: 2px;
+}
+
+.diff-layout-icon {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #d8d8d8 0 48%, #ffffff 48% 52%, #d8d8d8 52% 100%);
+}
+
+.diff-layout-icon::before,
+.diff-layout-icon::after {
+    position: absolute;
+    content: "";
+    background: #0a0a0a;
+}
+
+.diff-layout-icon.split::before {
+    left: 3px;
+    top: 8px;
+    width: 5px;
+    height: 2px;
+}
+
+.diff-layout-icon.split::after {
+    right: 4px;
+    top: 5px;
+    width: 2px;
+    height: 8px;
+    box-shadow: -3px 3px 0 #0a0a0a;
+}
+
+.diff-layout-icon.stacked {
+    background: linear-gradient(180deg, #d8d8d8 0 48%, #ffffff 48% 52%, #d8d8d8 52% 100%);
+}
+
+.diff-layout-icon.stacked::before {
+    left: 6px;
+    top: 4px;
+    width: 6px;
+    height: 2px;
+}
+
+.diff-layout-icon.stacked::after {
+    left: 6px;
+    bottom: 4px;
+    width: 6px;
+    height: 2px;
+}
+
+.diff-files {
+    display: grid;
+    gap: 12px;
+}
+
+.diff-file {
+    overflow: hidden;
+    border: 1px solid #242424;
+    border-radius: 8px;
+    background: #000000;
 }
 
 .review-comment {
     font-family: inherit;
     padding: 10px 12px;
-    border-left: 3px solid #075e54;
-    background: #eef7f3;
+    border-left: 3px solid #00c7b7;
+    color: #e8fffb;
+    background: #073631;
 }
 
 .review-comment p {
@@ -131,13 +232,13 @@ h1 {
 }
 
 .review-comment.critical {
-    border-color: #b91c1c;
-    background: #fff1f1;
+    border-color: #ff2e63;
+    background: #391017;
 }
 
 .review-comment.warning {
-    border-color: #b45309;
-    background: #fff7ed;
+    border-color: #f59e0b;
+    background: #33220a;
 }
 
 @media (max-width: 760px) {
