@@ -11,6 +11,14 @@ import { emptyState, isReusableReview, loadState, reviewKey, saveState } from ".
 import type { PullRequestReview, RepositoryConfig, RevisaurusConfig } from "../types/revisaurus.js";
 
 const program = new Command();
+const logIcon = {
+    cache: "💾",
+    complete: "✅",
+    error: "❌",
+    info: "ℹ️",
+    review: "🔍",
+    search: "📋",
+};
 
 program
     .name("revisaurus")
@@ -54,12 +62,14 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
     let completedReviews = 0;
     let failedReviews = 0;
 
-    console.log(`Loaded review cache from ${statePath} with ${Object.keys(state.reviews).length} entries.`);
+    console.log(
+        `${logIcon.cache} Loaded review cache from ${statePath} with ${Object.keys(state.reviews).length} entries.`,
+    );
 
     for (const repo of config.repositories) {
         const provider = providerFor(repo);
         const pullRequests = await provider.listRecentlyUpdatedPullRequests(repo);
-        console.log(`Found ${pullRequests.length} pull requests for ${repo.name}.`);
+        console.log(`${logIcon.search} Found ${pullRequests.length} pull requests for ${repo.name}.`);
 
         for (const pullRequest of pullRequests) {
             const key = reviewKey(pullRequest);
@@ -69,13 +79,15 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
             if (isReusableReview(state.reviews[key])) {
                 cachedReviews += 1;
                 console.log(
-                    `Using cached review for ${label} at ${pullRequest.headSha.slice(0, 8)} (${state.reviews[key].status}).`,
+                    `${logIcon.cache} Using cached review for ${label} at ${pullRequest.headSha.slice(0, 8)} (${state.reviews[key].status}).`,
                 );
                 continue;
             }
 
-            console.log(`No successful cached review for ${label} at ${pullRequest.headSha.slice(0, 8)}.`);
-            console.log(`Reviewing ${label}: ${pullRequest.title}`);
+            console.log(
+                `${logIcon.info} No successful cached review for ${label} at ${pullRequest.headSha.slice(0, 8)}.`,
+            );
+            console.log(`${logIcon.review} Reviewing ${label}: ${pullRequest.title}`);
 
             const diff = await provider.getPullRequestDiff(repo, pullRequest.number);
             const reviewedAt = new Date().toISOString();
@@ -99,7 +111,9 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
                 };
                 state.reviews[key] = review;
                 completedReviews += 1;
-                console.log(`Review completed for ${label} with ${result.comments.length} comments.`);
+                console.log(
+                    `${logIcon.complete} Review completed for ${label} with ${result.comments.length} comments.`,
+                );
             } catch (error) {
                 const review: PullRequestReview = {
                     repoId: repo.id,
@@ -115,7 +129,7 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
                 };
                 state.reviews[key] = review;
                 failedReviews += 1;
-                console.log(`Review failed for ${label}: ${review.error}`);
+                console.log(`${logIcon.error} Review failed for ${label}: ${review.error}`);
             }
 
             await saveState(statePath, state);
@@ -136,7 +150,7 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
 
     await saveState(statePath, state);
     console.log(
-        `Review run complete: ${cachedReviews} cached, ${completedReviews} reviewed, ${failedReviews} failed.`,
+        `${logIcon.complete} Review run complete: ${cachedReviews} cached, ${completedReviews} reviewed, ${failedReviews} failed.`,
     );
 
     if (!skipBuild) {
