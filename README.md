@@ -1,5 +1,8 @@
 # Revisaurus
 
+> [!NOTE]
+> This is still in early development. Come back after I announce this project publicly.
+
 Revisaurus reads a TOML configuration file, fetches the last N recently updated pull requests for each configured repository, runs an AI review for PR head commits that have not been reviewed yet, and generates a static Astro website.
 
 The first provider is GitHub. The provider interface is intentionally isolated so GitLab and Forgejo can be added later. The first reviewer is Kiro CLI headless mode, with the reviewer interface ready for other tools such as Codex.
