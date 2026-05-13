@@ -9,9 +9,7 @@ The first provider is GitHub. The provider interface is intentionally isolated s
 ```bash
 pnpm install
 cp examples/revisaurus.toml revisaurus.toml
-export GITHUB_TOKEN=...
-export KIRO_API_KEY=...
-pnpm generate -- --config revisaurus.toml
+GITHUB_TOKEN=... KIRO_API_KEY=... pnpm generate -- --config revisaurus.toml
 pnpm dev
 ```
 
