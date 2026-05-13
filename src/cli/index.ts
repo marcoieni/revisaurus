@@ -7,7 +7,7 @@ import { execa } from "execa";
 import { loadConfig } from "../config/loadConfig.js";
 import { providerFor } from "../providers/index.js";
 import { reviewerFor } from "../reviewers/index.js";
-import { emptyState, loadState, reviewKey, saveState } from "../state/reviewState.js";
+import { emptyState, isReusableReview, loadState, reviewKey, saveState } from "../state/reviewState.js";
 import type { PullRequestReview, RepositoryConfig, RevisaurusConfig } from "../types/revisaurus.js";
 
 const program = new Command();
@@ -59,8 +59,7 @@ async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace:
             const key = reviewKey(pullRequest);
             reviewKeys.push(key);
 
-            const isCached = Boolean(state.reviews[key]);
-            if (isCached) {
+            if (isReusableReview(state.reviews[key])) {
                 continue;
             }
 
