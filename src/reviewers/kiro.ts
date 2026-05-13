@@ -14,14 +14,10 @@ export class KiroReviewer implements Reviewer {
         }
         args.push(prompt);
 
-        const { stdout } = await execa(
-            this.config.command,
-            args,
-            {
-                timeout: this.config.timeoutSeconds * 1000,
-                env: process.env,
-            },
-        );
+        const { stdout } = await execa(this.config.command, args, {
+            timeout: this.config.timeoutSeconds * 1000,
+            env: process.env,
+        });
 
         return parseReviewOutput(stdout);
     }
