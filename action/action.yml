@@ -24,6 +24,8 @@ runs:
     - name: Install Kiro CLI
       shell: bash
       run: curl -fsSL https://cli.kiro.dev/install | bash
+    # TODO: probably there's a way to avoid installing dependencies when running the action.
+    #       I.e. the action start in a more advanced state. So that it's faster.
     - name: Install dependencies
       shell: bash
       run: pnpm --dir "${GITHUB_ACTION_PATH}/.." install --frozen-lockfile
