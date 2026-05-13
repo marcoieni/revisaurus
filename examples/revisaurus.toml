@@ -6,6 +6,7 @@ skipped_authors = ["renovate", "renovate[bot]", "dependabot", "dependabot[bot]"]
 [reviewer]
 kind = "kiro"
 command = "kiro-cli"
+model = "auto"
 trust_tools = "read,grep"
 timeout_seconds = 900
 

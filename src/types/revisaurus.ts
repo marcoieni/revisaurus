@@ -14,6 +14,7 @@ export interface RevisaurusConfig {
 export interface ReviewerConfig {
     kind: "kiro" | "codex";
     command: string;
+    model?: string;
     trustTools: string;
     timeoutSeconds: number;
 }

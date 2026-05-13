@@ -22,6 +22,7 @@ const configSchema = z.object({
         .object({
             kind: z.enum(["kiro", "codex"]).default("kiro"),
             command: z.string().default("kiro-cli"),
+            model: z.string().trim().min(1).optional(),
             trust_tools: z.string().default("read,grep"),
             timeout_seconds: z.number().int().positive().default(900),
         })
@@ -57,6 +58,7 @@ export async function loadConfig(path: string): Promise<RevisaurusConfig> {
         reviewer: {
             kind: parsed.reviewer.kind,
             command: parsed.reviewer.command,
+            model: parsed.reviewer.model,
             trustTools: parsed.reviewer.trust_tools,
             timeoutSeconds: parsed.reviewer.timeout_seconds,
         },

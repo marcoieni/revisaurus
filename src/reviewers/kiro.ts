@@ -8,9 +8,15 @@ export class KiroReviewer implements Reviewer {
 
     async review(request: ReviewRequest): Promise<ReviewResult> {
         const prompt = buildPrompt(request);
+        const args = ["chat", "--no-interactive", `--trust-tools=${this.config.trustTools}`];
+        if (this.config.model) {
+            args.push("--model", this.config.model);
+        }
+        args.push(prompt);
+
         const { stdout } = await execa(
             this.config.command,
-            ["chat", "--no-interactive", `--trust-tools=${this.config.trustTools}`, prompt],
+            args,
             {
                 timeout: this.config.timeoutSeconds * 1000,
                 env: process.env,
