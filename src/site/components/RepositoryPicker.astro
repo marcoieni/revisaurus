@@ -26,9 +26,7 @@ const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
       value={selectedRepository ? repositoryLabel(selectedRepository) : initialRepo}
       data-selected-repo={initialRepo}
     />
-    <button class="repo-combobox-toggle" type="button" aria-label="Show repositories" tabindex="-1">
-      <span aria-hidden="true">⌄</span>
-    </button>
+    <button class="repo-combobox-toggle" type="button" aria-label="Show repositories" tabindex="-1"></button>
   </div>
   <div id="repo-options" class="repo-options" role="listbox" hidden>
     {
