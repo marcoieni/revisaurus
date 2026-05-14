@@ -8,18 +8,39 @@ export class KiroReviewer implements Reviewer {
 
     async review(request: ReviewRequest): Promise<ReviewResult> {
         const prompt = buildPrompt(request);
+        const rawOutput = await this.runKiro(prompt);
+        try {
+            return parseReviewOutput(rawOutput);
+        } catch (error) {
+            const reason = error instanceof Error ? error.message : String(error);
+            const repairedOutput = await this.runKiro(buildRepairPrompt(request, rawOutput));
+            try {
+                return parseReviewOutput(repairedOutput);
+            } catch {
+                throw new Error(`Reviewer did not produce valid JSON: ${reason}${previewOutput(rawOutput)}`);
+            }
+        }
+    }
+
+    private async runKiro(prompt: string): Promise<string> {
         const args = ["chat", "--no-interactive", `--trust-tools=${this.config.trustTools}`];
         if (this.config.model) {
             args.push("--model", this.config.model);
         }
         args.push(prompt);
 
-        const { stdout } = await execa(this.config.command, args, {
+        const result = await execa(this.config.command, args, {
             timeout: this.config.timeoutSeconds * 1000,
             env: process.env,
+            reject: false,
         });
 
-        return parseReviewOutput(stdout);
+        const rawOutput = formatReviewerOutput(result.stdout, result.stderr);
+        if (result.failed) {
+            throw new Error(formatReviewerFailure(result, rawOutput));
+        }
+
+        return rawOutput;
     }
 }
 
@@ -31,7 +52,7 @@ Pull request: #${request.pullRequest.number} ${request.pullRequest.title}
 Author: ${request.pullRequest.author}
 Head commit: ${request.pullRequest.headSha}
 
-Return only JSON with this exact shape:
+Return only valid JSON with this exact shape and no surrounding text:
 {
   "summary": "short markdown summary",
   "comments": [
@@ -45,10 +66,67 @@ Return only JSON with this exact shape:
   ]
 }
 
-Use "right" for added/new lines and "left" for removed/old lines. Tie all comments to specific diff lines (even if the line isn't related to the comment sometimes).
+Use "right" for added/new lines and "left" for removed/old lines. Tie all comments to specific diff lines.
+If there are no findings, return an empty comments array.
+If you cannot complete the review, still return valid JSON with a summary explaining the limitation and an empty comments array.
 
 Diff:
 ${request.diff}`;
+}
+
+function buildRepairPrompt(request: ReviewRequest, previousOutput: string): string {
+    return `Convert the previous pull request review output into valid JSON only.
+
+Repository: ${request.repositoryUrl}
+Pull request: #${request.pullRequest.number} ${request.pullRequest.title}
+Head commit: ${request.pullRequest.headSha}
+
+Return only JSON with this exact shape and no surrounding markdown, prose, or code fences:
+{
+  "summary": "short markdown summary",
+  "comments": [
+    {
+      "path": "file path from the diff",
+      "line": 123,
+      "side": "right",
+      "severity": "critical|warning|suggestion|note",
+      "body": "comment body"
+    }
+  ]
+}
+
+Rules:
+- Preserve any specific findings from the previous output.
+- Tie comments only to specific file paths and line numbers mentioned in the previous output.
+- If no specific comments can be recovered, return an empty comments array.
+- If the previous output says the review could not be completed, put that limitation in summary and return an empty comments array.
+
+Previous output:
+${previousOutput.slice(0, 12000)}`;
+}
+
+function formatReviewerOutput(stdout: string, stderr: string): string {
+    const parts = [stdout, stderr].filter((part) => part.trim().length > 0);
+    return stripControlCharacters(parts.join("\n"));
+}
+
+function formatReviewerFailure(
+    result: { exitCode?: number; timedOut?: boolean; stdout: string; stderr: string },
+    rawOutput: string,
+): string {
+    const reason = result.timedOut
+        ? "Reviewer command timed out"
+        : `Reviewer command exited with code ${result.exitCode ?? "unknown"}`;
+    return `${reason}.${previewOutput(rawOutput)}`;
+}
+
+function previewOutput(output: string): string {
+    const trimmed = output.trim();
+    if (!trimmed) {
+        return " No reviewer output was captured.";
+    }
+
+    return ` Output preview: ${trimmed.slice(0, 1000)}`;
 }
 
 function parseReviewOutput(stdout: string): ReviewResult {

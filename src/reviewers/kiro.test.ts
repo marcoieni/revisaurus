@@ -5,10 +5,12 @@ import type { ReviewerConfig } from "../types/revisaur.js";
 
 vi.mock("execa", () => ({
     execa: vi.fn(async () => ({
+        failed: false,
         stdout: JSON.stringify({
             summary: "Looks good.",
             comments: [],
         }),
+        stderr: "",
     })),
 }));
 
@@ -49,7 +51,7 @@ describe("KiroReviewer", () => {
         expect(execa).toHaveBeenCalledWith(
             "kiro-cli",
             expect.arrayContaining(["chat", "--no-interactive", "--trust-tools=read,grep"]),
-            expect.objectContaining({ timeout: 900_000 }),
+            expect.objectContaining({ reject: false, timeout: 900_000 }),
         );
         expect(execa).not.toHaveBeenCalledWith(
             expect.anything(),
@@ -65,6 +67,56 @@ describe("KiroReviewer", () => {
             "kiro-cli",
             expect.arrayContaining(["--model", "claude-sonnet-4.5"]),
             expect.objectContaining({ timeout: 900_000 }),
+        );
+    });
+
+    it("includes captured output when Kiro exits unsuccessfully", async () => {
+        vi.mocked(execa).mockResolvedValueOnce({
+            failed: true,
+            exitCode: 1,
+            timedOut: false,
+            stdout: "Unable to continue",
+            stderr: "missing permission",
+        } as Awaited<ReturnType<typeof execa>>);
+
+        await expect(new KiroReviewer(config()).review(request)).rejects.toThrow(
+            "Reviewer command exited with code 1. Output preview: Unable to continue\nmissing permission",
+        );
+    });
+
+    it("repairs invalid JSON responses with a second Kiro pass", async () => {
+        vi.mocked(execa).mockResolvedValueOnce({
+            failed: false,
+            stdout: "I reviewed the diff and found no issues.",
+            stderr: "",
+        } as Awaited<ReturnType<typeof execa>>);
+
+        await expect(new KiroReviewer(config()).review(request)).resolves.toMatchObject({
+            summary: "Looks good.",
+            comments: [],
+        });
+
+        expect(execa).toHaveBeenCalledTimes(2);
+        expect(vi.mocked(execa).mock.calls[1]?.[1]).toEqual(
+            expect.arrayContaining([expect.stringContaining("Convert the previous pull request review output")]),
+        );
+    });
+
+    it("explains invalid JSON responses when repair also fails", async () => {
+        vi.mocked(execa)
+            .mockResolvedValueOnce({
+                failed: false,
+                stdout: "I reviewed the diff and found no issues.",
+                stderr: "",
+            } as Awaited<ReturnType<typeof execa>>)
+            .mockResolvedValueOnce({
+                failed: false,
+                stdout: "Still not JSON.",
+                stderr: "",
+            } as Awaited<ReturnType<typeof execa>>);
+
+        await expect(new KiroReviewer(config()).review(request)).rejects.toThrow(
+            "Reviewer did not produce valid JSON: Reviewer did not return JSON. Output preview: I reviewed the diff and found no issues.",
         );
     });
 });
