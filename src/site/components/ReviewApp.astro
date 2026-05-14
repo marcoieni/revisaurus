@@ -28,31 +28,34 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
     <div class="topbar-controls">
       <fieldset class="theme-selector" aria-label="Color mode">
         <legend>Color mode</legend>
-        <label>
-          <input type="radio" name="theme" value="light" />
+        <label class="has-tooltip">
+          <input type="radio" name="theme" value="light" aria-label="Light mode" />
           <span class="theme-option theme-option-light" aria-hidden="true"></span>
-          <span class="sr-only">Light mode</span>
+          <span class="topbar-tooltip" aria-hidden="true">Light mode</span>
         </label>
-        <label>
-          <input type="radio" name="theme" value="dark" />
+        <label class="has-tooltip">
+          <input type="radio" name="theme" value="dark" aria-label="Dark mode" />
           <span class="theme-option theme-option-dark" aria-hidden="true"></span>
-          <span class="sr-only">Dark mode</span>
+          <span class="topbar-tooltip" aria-hidden="true">Dark mode</span>
         </label>
       </fieldset>
-      <label class="wrap-toggle">
-        <input type="checkbox" name="word-wrap" />
+      <label class="wrap-toggle has-tooltip">
+        <input type="checkbox" name="word-wrap" aria-label="Wrap lines" />
         <span class="wrap-switch" aria-hidden="true"></span>
-        <span>Wrap</span>
+        <span class="control-icon control-icon-text-wrap" aria-hidden="true"></span>
+        <span class="topbar-tooltip" aria-hidden="true">Wrap lines</span>
       </label>
       <fieldset class="diff-layout-selector" aria-label="Diff layout">
         <legend>Diff layout</legend>
-        <label>
-          <input type="radio" name="diff-layout" value="split" />
-          <span>Split</span>
+        <label class="has-tooltip">
+          <input type="radio" name="diff-layout" value="split" aria-label="Split diff" />
+          <span class="control-icon control-icon-square-split-horizontal" aria-hidden="true"></span>
+          <span class="topbar-tooltip" aria-hidden="true">Split diff</span>
         </label>
-        <label>
-          <input type="radio" name="diff-layout" value="stacked" />
-          <span>Stacked</span>
+        <label class="has-tooltip">
+          <input type="radio" name="diff-layout" value="stacked" aria-label="Stacked diff" />
+          <span class="control-icon control-icon-square-split-vertical" aria-hidden="true"></span>
+          <span class="topbar-tooltip" aria-hidden="true">Stacked diff</span>
         </label>
       </fieldset>
       <RepositoryPicker repositories={repositories} initialRepo={initialRepo} />
