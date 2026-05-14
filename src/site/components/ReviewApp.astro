@@ -50,7 +50,6 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
             <div>
               <h2><a href={repo.url}>{repositoryLabel(repo)}</a></h2>
             </div>
-            <span>{reviews.filter((review) => review.repoId === repo.id).length} reviews</span>
           </div>
           {reviews
             .filter((review) => review.repoId === repo.id)
