@@ -2,7 +2,7 @@ export type ProviderKind = "github" | "gitlab" | "forgejo";
 
 export type ReviewStatus = "reviewed" | "skipped" | "failed";
 
-export interface RevisaurusConfig {
+export interface RevisaurConfig {
     outputDir: string;
     dataDir: string;
     maxPullRequests: number;

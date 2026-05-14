@@ -1,13 +1,13 @@
 # GitHub Action
 
-Revisaurus ships as a composite action. It installs Node, pnpm, Kiro CLI, and runs the generator. The generated static site is written to `site-dist`; upload or deploy that directory from your workflow.
+Revisaur ships as a composite action. It installs Node, pnpm, Kiro CLI, and runs the generator. The generated static site is written to `site-dist`; upload or deploy that directory from your workflow.
 
-When the action runs in a repository such as `owner/reviews`, Revisaurus automatically builds assets with the `/reviews` base path required by GitHub Pages project sites. For a custom domain or an `owner.github.io` repository deployed at the domain root, set `base-path: "/"`.
+When the action runs in a repository such as `owner/reviews`, Revisaur automatically builds assets with the `/reviews` base path required by GitHub Pages project sites. For a custom domain or an `owner.github.io` repository deployed at the domain root, set `base-path: "/"`.
 
 Kiro [headless mode](https://kiro.dev/docs/cli/headless/) requires `KIRO_API_KEY`. Create a Kiro API key and store it as a repository secret named `KIRO_API_KEY`. Kiro documents headless mode as `kiro-cli chat --no-interactive`, with API-key auth through the `KIRO_API_KEY` environment variable.
 
 ```yaml
-name: Revisaurus
+name: Revisaur
 
 on:
   workflow_dispatch:
@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: marcoieni/revisaurus/action@main
+      - uses: marcoieni/revisaur/action@main
         env:
           KIRO_API_KEY: ${{ secrets.KIRO_API_KEY }}
       - uses: actions/upload-pages-artifact@v5

@@ -1,5 +1,5 @@
 ---
-import type { PullRequestReview, RepositoryConfig } from "../../types/revisaurus.js";
+import type { PullRequestReview, RepositoryConfig } from "../../types/revisaur.js";
 import { repositoryLabel } from "../repositories.js";
 import { collapseChevronSvg } from "../runtime/icons.js";
 import RepositoryPicker from "./RepositoryPicker.astro";
@@ -21,7 +21,7 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
 <main class="app-shell">
   <header class="topbar">
     <div>
-      <h1>Revisaurus</h1>
+      <h1>Revisaur</h1>
       <p>AI pull request reviews generated from recent repository activity.</p>
     </div>
     <div class="topbar-controls">
@@ -106,7 +106,7 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
 
   const isColorMode = (value: string | null): value is ColorMode => value === "light" || value === "dark";
   const getInitialTheme = (): ColorMode => {
-    const storedTheme = localStorage.getItem("revisaurus:theme");
+    const storedTheme = localStorage.getItem("revisaur:theme");
     if (isColorMode(storedTheme)) {
       return storedTheme;
     }
@@ -116,7 +116,7 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
 
   const applyTheme = (theme: ColorMode) => {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem("revisaurus:theme", theme);
+    localStorage.setItem("revisaur:theme", theme);
     themeSelector?.setAttribute("aria-label", `Color mode: ${theme}`);
     for (const input of themeInputs) {
       input.checked = input.value === theme;

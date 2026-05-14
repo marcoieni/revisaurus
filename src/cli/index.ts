@@ -8,7 +8,7 @@ import { loadConfig } from "../config/loadConfig.js";
 import { providerFor } from "../providers/index.js";
 import { reviewerFor } from "../reviewers/index.js";
 import { emptyState, isReusableReview, loadState, reviewKey, saveState } from "../state/reviewState.js";
-import type { PullRequestReview, RepositoryConfig, RevisaurusConfig } from "../types/revisaurus.js";
+import type { PullRequestReview, RepositoryConfig, RevisaurConfig } from "../types/revisaur.js";
 
 const program = new Command();
 const logIcon = {
@@ -21,14 +21,14 @@ const logIcon = {
 };
 
 program
-    .name("revisaurus")
+    .name("revisaur")
     .description("Generate an Astro website containing AI reviews for recent pull requests.")
     .version("0.1.0");
 
 program
     .command("generate")
     .description("Fetch pull requests, run missing reviews, and build the static site.")
-    .option("-c, --config <path>", "Path to revisaurus TOML config", "revisaurus.toml")
+    .option("-c, --config <path>", "Path to revisaur TOML config", "revisaur.toml")
     .option("--skip-build", "Only write review data, do not run astro build")
     .action(async (options: { config: string; skipBuild?: boolean }) => {
         const workspace = process.cwd();
@@ -39,7 +39,7 @@ program
 program
     .command("demo")
     .description("Generate fake review data and build the static demo site.")
-    .option("--data-dir <path>", "Directory for generated review data", ".revisaurus/data")
+    .option("--data-dir <path>", "Directory for generated review data", ".revisaur/data")
     .option("-o, --output-dir <path>", "Directory for the built static site", "site-dist")
     .option("--skip-build", "Only write demo review data, do not run astro build")
     .action(async (options: { dataDir: string; outputDir: string; skipBuild?: boolean }) => {
@@ -49,7 +49,7 @@ program
 
 await program.parseAsync();
 
-async function generate(config: RevisaurusConfig, skipBuild: boolean, workspace: string): Promise<void> {
+async function generate(config: RevisaurConfig, skipBuild: boolean, workspace: string): Promise<void> {
     const dataDir = path.resolve(workspace, config.dataDir);
     const outputDir = path.resolve(workspace, config.outputDir);
     await ensureDir(dataDir);
@@ -213,9 +213,9 @@ async function buildSite(dataDir: string, outputDir: string, workspace: string):
         cwd: packageRoot,
         env: {
             ...process.env,
-            REVISAURUS_DATA_DIR: dataDir,
-            REVISAURUS_OUTPUT_DIR: outputDir,
-            REVISAURUS_WORKSPACE: workspace,
+            REVISAUR_DATA_DIR: dataDir,
+            REVISAUR_OUTPUT_DIR: outputDir,
+            REVISAUR_WORKSPACE: workspace,
         },
     });
 }

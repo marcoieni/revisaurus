@@ -1,5 +1,5 @@
 output_dir = "site-dist"
-data_dir = ".revisaurus/data"
+data_dir = ".revisaur/data"
 max_pull_requests = 10
 skipped_authors = ["renovate", "renovate[bot]", "dependabot", "dependabot[bot]"]
 

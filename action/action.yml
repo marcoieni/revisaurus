@@ -1,12 +1,12 @@
-name: Revisaurus
-description: Generate a static Revisaurus PR review website.
+name: Revisaur
+description: Generate a static Revisaur PR review website.
 inputs:
   config:
-    description: Path to the revisaurus TOML config file.
+    description: Path to the revisaur TOML config file.
     required: false
-    default: revisaurus.toml
+    default: revisaur.toml
   node-version:
-    description: Node.js version used to run Revisaurus.
+    description: Node.js version used to run Revisaur.
     required: false
     default: "24"
   base-path:
@@ -32,14 +32,14 @@ runs:
     - name: Install dependencies
       shell: bash
       run: pnpm --dir "${GITHUB_ACTION_PATH}/.." install --frozen-lockfile
-    - name: Build Revisaurus
+    - name: Build Revisaur
       shell: bash
       run: pnpm --dir "${GITHUB_ACTION_PATH}/.." build
-    - name: Generate Revisaurus site
+    - name: Generate Revisaur site
       shell: bash
       env:
         GITHUB_TOKEN: ${{ github.token }}
         KIRO_API_KEY: ${{ env.KIRO_API_KEY }}
         INPUTS_CONFIG: ${{ inputs.config }}
-        REVISAURUS_BASE_PATH: ${{ inputs.base-path }}
+        REVISAUR_BASE_PATH: ${{ inputs.base-path }}
       run: node "${GITHUB_ACTION_PATH}/../dist/cli/index.js" generate --config "${INPUTS_CONFIG}"

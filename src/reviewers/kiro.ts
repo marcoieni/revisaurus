@@ -1,6 +1,6 @@
 import { execa } from "execa";
 import type { Reviewer, ReviewRequest, ReviewResult } from "./reviewer.js";
-import type { ReviewerConfig } from "../types/revisaurus.js";
+import type { ReviewerConfig } from "../types/revisaur.js";
 import { stripControlCharacters } from "../utils/sanitizeText.js";
 
 export class KiroReviewer implements Reviewer {

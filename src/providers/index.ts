@@ -1,6 +1,6 @@
 import { GitHubProvider } from "./github.js";
 import type { RepositoryProvider } from "./provider.js";
-import type { RepositoryConfig } from "../types/revisaurus.js";
+import type { RepositoryConfig } from "../types/revisaur.js";
 
 export function providerFor(repo: RepositoryConfig): RepositoryProvider {
     switch (repo.provider) {

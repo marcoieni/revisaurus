@@ -1,5 +1,5 @@
 import { pathExists, readJson, writeJson } from "fs-extra/esm";
-import type { PullRequestReview, PullRequestSummary, ReviewState } from "../types/revisaurus.js";
+import type { PullRequestReview, PullRequestSummary, ReviewState } from "../types/revisaur.js";
 
 export function emptyState(): ReviewState {
     return { version: 1, reviews: {} };

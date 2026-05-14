@@ -1,6 +1,6 @@
 import { Octokit } from "octokit";
 import type { RepositoryProvider } from "./provider.js";
-import type { PullRequestSummary, RepositoryConfig } from "../types/revisaurus.js";
+import type { PullRequestSummary, RepositoryConfig } from "../types/revisaur.js";
 
 export class GitHubProvider implements RepositoryProvider {
     #client: Octokit;
