@@ -41,6 +41,8 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
                     lineNumber: comment.line,
                     side: comment.side === "right" ? ("additions" as const) : ("deletions" as const),
                     metadata: {
+                        path: comment.path,
+                        line: comment.line,
                         severity: comment.severity,
                         body: comment.body,
                     },
@@ -68,10 +70,15 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
                 },
                 renderAnnotation(annotation) {
                     const comment = annotation.metadata;
+                    const location = `${comment.path}:${comment.line}`;
                     const node = document.createElement("div");
                     node.className = `review-comment ${comment.severity}`;
                     node.style.color = "#171717";
-                    node.innerHTML = `<strong>${comment.severity}</strong><p>${escapeHtml(comment.body)}</p>`;
+                    node.innerHTML = `<div class="review-comment-header"><strong>${comment.severity}</strong><button class="copy-location-button" type="button" data-location="${escapeAttribute(location)}" aria-label="Copy ${escapeAttribute(location)}" title="Copy ${escapeAttribute(location)}"><span class="copy-location-icon" aria-hidden="true"></span><span class="sr-only">Copy ${escapeHtml(location)}</span></button></div><p>${escapeHtml(comment.body)}</p>`;
+                    const button = node.querySelector<HTMLButtonElement>(".copy-location-button");
+                    button?.addEventListener("click", () => {
+                        void copyLocation(button, location);
+                    });
                     return node;
                 },
             });
@@ -104,6 +111,58 @@ function isThemeType(value: unknown): value is ThemeTypes {
 
 function escapeHtml(value: string): string {
     return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
+
+function escapeAttribute(value: string): string {
+    return escapeHtml(value).replaceAll('"', "&quot;");
+}
+
+async function copyLocation(button: HTMLButtonElement, location: string): Promise<void> {
+    try {
+        if (navigator.clipboard) {
+            await navigator.clipboard.writeText(location);
+        } else if (!copyLocationFallback(location)) {
+            throw new Error("Clipboard unavailable");
+        }
+        setCopyButtonState(button, "Copied");
+    } catch {
+        if (copyLocationFallback(location)) {
+            setCopyButtonState(button, "Copied");
+        } else {
+            setCopyButtonState(button, "Copy failed");
+        }
+    }
+}
+
+function copyLocationFallback(location: string): boolean {
+    const field = document.createElement("textarea");
+    field.value = location;
+    field.setAttribute("readonly", "");
+    field.style.position = "fixed";
+    field.style.top = "0";
+    field.style.left = "-9999px";
+    document.body.append(field);
+    field.select();
+
+    try {
+        const copyCommand = (document as unknown as { execCommand(commandId: string): boolean }).execCommand;
+        return copyCommand.call(document, "copy");
+    } finally {
+        field.remove();
+    }
+}
+
+function setCopyButtonState(button: HTMLButtonElement, status: string): void {
+    const originalLabel = button.getAttribute("aria-label") ?? "Copy location";
+    button.setAttribute("aria-label", status);
+    button.title = status;
+    button.dataset.copied = status === "Copied" ? "true" : "false";
+
+    window.setTimeout(() => {
+        button.setAttribute("aria-label", originalLabel);
+        button.title = originalLabel;
+        delete button.dataset.copied;
+    }, 1400);
 }
 
 function createCollapseButton({
@@ -146,6 +205,8 @@ function updateCollapseButtonState(button: HTMLButtonElement, collapsed: boolean
 }
 
 interface ReviewAnnotation {
+    path: string;
+    line: number;
     severity: string;
     body: string;
 }
