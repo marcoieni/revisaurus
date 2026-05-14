@@ -9,9 +9,7 @@ export default defineConfig({
     outDir: process.env.REVISAUR_OUTPUT_DIR ?? "site-dist",
     vite: {
         define: {
-            "import.meta.env.REVISAUR_DATA_DIR": JSON.stringify(
-                process.env.REVISAUR_DATA_DIR ?? ".revisaur/data",
-            ),
+            "import.meta.env.REVISAUR_DATA_DIR": JSON.stringify(process.env.REVISAUR_DATA_DIR ?? ".revisaur/data"),
             "import.meta.env.REVISAUR_WORKSPACE": JSON.stringify(process.env.REVISAUR_WORKSPACE ?? process.cwd()),
         },
     },
