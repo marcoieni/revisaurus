@@ -3,9 +3,23 @@
     "version": "0.1.0",
     "description": "Generate an Astro website with AI reviews for recently updated pull requests.",
     "type": "module",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/marcoieni/revisaur.git"
+    },
+    "bugs": {
+        "url": "https://github.com/marcoieni/revisaur/issues"
+    },
+    "homepage": "https://github.com/marcoieni/revisaur#readme",
     "bin": {
         "revisaur": "./dist/cli/index.js"
     },
+    "files": [
+        "dist",
+        "public",
+        "README.md",
+        "LICENSE-MIT"
+    ],
     "scripts": {
         "build": "tsc -p tsconfig.json",
         "check": "tsc -p tsconfig.json --noEmit && astro check",
@@ -13,6 +27,7 @@
         "dev": "astro dev",
         "format": "prettier --write .",
         "generate": "tsx src/cli/index.ts generate",
+        "prepack": "pnpm run build",
         "site:build": "astro build",
         "test": "vitest run"
     },
