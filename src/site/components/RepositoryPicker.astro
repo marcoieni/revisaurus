@@ -204,9 +204,18 @@ const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
     if (!input || !listbox) return;
 
     const shouldOpen = listbox.hidden === true;
+    toggle.dataset.tooltipDismissed = "true";
     input.focus();
     filterOptions("");
     setOpen(shouldOpen);
+  });
+
+  toggle?.addEventListener("pointerleave", () => {
+    delete toggle.dataset.tooltipDismissed;
+  });
+
+  toggle?.addEventListener("blur", () => {
+    delete toggle.dataset.tooltipDismissed;
   });
 
   options.forEach((option) => {

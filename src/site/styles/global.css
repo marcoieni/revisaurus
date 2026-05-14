@@ -106,14 +106,22 @@ a {
 
 .topbar-controls .has-tooltip:hover .topbar-tooltip,
 .topbar-controls .has-tooltip:hover::before,
-.topbar-controls .has-tooltip:focus-within .topbar-tooltip,
-.topbar-controls .has-tooltip:focus-within::before,
+.topbar-controls .has-tooltip:has(input:focus-visible) .topbar-tooltip,
+.topbar-controls .has-tooltip:has(input:focus-visible)::before,
 .repo-combobox-toggle:hover .topbar-tooltip,
 .repo-combobox-toggle:hover::after,
 .repo-combobox-toggle:focus-visible .topbar-tooltip,
 .repo-combobox-toggle:focus-visible::after {
     opacity: 1;
     transform: translate(50%, 0);
+}
+
+.topbar-controls .has-tooltip[data-tooltip-dismissed="true"] .topbar-tooltip,
+.topbar-controls .has-tooltip[data-tooltip-dismissed="true"]::before,
+.repo-combobox-toggle[data-tooltip-dismissed="true"] .topbar-tooltip,
+.repo-combobox-toggle[data-tooltip-dismissed="true"]::after {
+    opacity: 0;
+    transform: translate(50%, 2px);
 }
 
 h1,
