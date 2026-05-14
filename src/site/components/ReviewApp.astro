@@ -3,6 +3,7 @@ import type { PullRequestReview, RepositoryConfig } from "../../types/revisaur.j
 import { repositoryLabel } from "../repositories.js";
 import { collapseChevronSvg } from "../runtime/icons.js";
 import RepositoryPicker from "./RepositoryPicker.astro";
+import ReviewIndicator from "./ReviewIndicator.astro";
 
 const { data } = Astro.props;
 const repositories = data.repositories as Array<Pick<RepositoryConfig, "id" | "name" | "provider" | "url" | "owner" | "repo">>;
@@ -70,11 +71,14 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
                             <a class="review-author" href={authorUrl}>{review.pullRequest.author}</a>
                           ) : (
                             review.pullRequest.author
-                          )} · {review.status} · {review.reviewedCommit.slice(0, 8)}
+                          )} · {review.reviewedCommit.slice(0, 8)}
                         </p>
                       </div>
                     </div>
-                    <time datetime={review.reviewedAt}>{new Date(review.reviewedAt).toLocaleString()}</time>
+                    <div class="review-meta">
+                      <ReviewIndicator review={review} />
+                      <time datetime={review.reviewedAt}>{new Date(review.reviewedAt).toLocaleString()}</time>
+                    </div>
                   </header>
                   <div class="review-body">
                     <div class="summary">{review.summary}</div>

@@ -1,0 +1,62 @@
+---
+import type { PullRequestReview } from "../../types/revisaur.js";
+
+interface Props {
+  review: PullRequestReview;
+}
+
+type ReviewSeverity = PullRequestReview["comments"][number]["severity"];
+
+const { review } = Astro.props;
+
+const severityRank: Record<ReviewSeverity, number> = {
+  critical: 4,
+  warning: 3,
+  suggestion: 2,
+  note: 1,
+};
+
+function getReviewIndicator(review: PullRequestReview): { label: string; title: string; severity: ReviewSeverity | "clean" | "failed" } {
+  if (review.status === "failed") {
+    return {
+      label: "Review failed",
+      title: "Review failed",
+      severity: "failed",
+    };
+  }
+
+  const mostImportantSeverity = review.comments.reduce<ReviewSeverity | undefined>((highest, comment) => {
+    if (!highest || severityRank[comment.severity] > severityRank[highest]) {
+      return comment.severity;
+    }
+
+    return highest;
+  }, undefined);
+
+  if (!mostImportantSeverity) {
+    return {
+      label: "No AI review comments",
+      title: "No AI review comments",
+      severity: "clean",
+    };
+  }
+
+  const label = `Highest AI review severity: ${mostImportantSeverity}`;
+  return {
+    label,
+    title: label,
+    severity: mostImportantSeverity,
+  };
+}
+
+const indicator = getReviewIndicator(review);
+---
+
+<span
+  class={`review-status-indicator ${indicator.severity}`}
+  role="img"
+  title={indicator.title}
+  aria-label={indicator.label}
+>
+  {indicator.severity === "failed" ? "X" : ""}
+</span>
