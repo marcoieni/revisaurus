@@ -39,12 +39,19 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
           <span class="topbar-tooltip" aria-hidden="true">Dark mode</span>
         </label>
       </fieldset>
-      <label class="wrap-toggle has-tooltip">
-        <input type="checkbox" name="word-wrap" aria-label="Wrap lines" />
-        <span class="wrap-switch" aria-hidden="true"></span>
-        <span class="control-icon control-icon-text-wrap" aria-hidden="true"></span>
-        <span class="topbar-tooltip" aria-hidden="true">Wrap lines</span>
-      </label>
+      <fieldset class="diff-overflow-selector" aria-label="Diff overflow">
+        <legend>Diff overflow</legend>
+        <label class="has-tooltip">
+          <input type="radio" name="diff-overflow" value="scroll" aria-label="Scroll lines" />
+          <span class="control-icon control-icon-text-align-justify" aria-hidden="true"></span>
+          <span class="topbar-tooltip" aria-hidden="true">Scroll lines</span>
+        </label>
+        <label class="has-tooltip">
+          <input type="radio" name="diff-overflow" value="wrap" aria-label="Wrap lines" />
+          <span class="control-icon control-icon-text-wrap" aria-hidden="true"></span>
+          <span class="topbar-tooltip" aria-hidden="true">Wrap lines</span>
+        </label>
+      </fieldset>
       <fieldset class="diff-layout-selector" aria-label="Diff layout">
         <legend>Diff layout</legend>
         <label class="has-tooltip">
@@ -124,7 +131,8 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
   const sections = [...document.querySelectorAll<HTMLElement>(".repo-section")];
   const themeSelector = document.querySelector<HTMLElement>(".theme-selector");
   const themeInputs = [...document.querySelectorAll<HTMLInputElement>('input[name="theme"]')];
-  const wordWrapInput = document.querySelector<HTMLInputElement>('input[name="word-wrap"]');
+  const diffOverflowSelector = document.querySelector<HTMLElement>(".diff-overflow-selector");
+  const diffOverflowInputs = [...document.querySelectorAll<HTMLInputElement>('input[name="diff-overflow"]')];
   const diffLayoutSelector = document.querySelector<HTMLElement>(".diff-layout-selector");
   const diffLayoutInputs = [...document.querySelectorAll<HTMLInputElement>('input[name="diff-layout"]')];
   type ColorMode = "light" | "dark";
@@ -132,6 +140,7 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
   type DiffLayout = "split" | "stacked";
 
   const isColorMode = (value: string | null): value is ColorMode => value === "light" || value === "dark";
+  const isDiffOverflow = (value: string | null): value is DiffOverflow => value === "scroll" || value === "wrap";
   const isDiffLayout = (value: string | null): value is DiffLayout => value === "split" || value === "stacked";
   const getInitialTheme = (): ColorMode => {
     const storedTheme = localStorage.getItem("revisaur:theme");
@@ -161,8 +170,9 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
   const applyDiffOverflow = (overflow: DiffOverflow) => {
     document.documentElement.dataset.diffOverflow = overflow;
     localStorage.setItem("revisaur:diff-overflow", overflow);
-    if (wordWrapInput) {
-      wordWrapInput.checked = overflow === "wrap";
+    diffOverflowSelector?.setAttribute("aria-label", `Diff overflow: ${overflow}`);
+    for (const input of diffOverflowInputs) {
+      input.checked = input.value === overflow;
     }
     document.dispatchEvent(new CustomEvent("diff-overflow:selected", { detail: { overflow } }));
   };
@@ -187,9 +197,13 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
       }
     });
   }
-  wordWrapInput?.addEventListener("change", () => {
-    applyDiffOverflow(wordWrapInput.checked ? "wrap" : "scroll");
-  });
+  for (const input of diffOverflowInputs) {
+    input.addEventListener("change", () => {
+      if (input.checked && isDiffOverflow(input.value)) {
+        applyDiffOverflow(input.value);
+      }
+    });
+  }
   for (const input of diffLayoutInputs) {
     input.addEventListener("change", () => {
       if (input.checked && isDiffLayout(input.value)) {

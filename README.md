@@ -68,4 +68,5 @@ The site uses the following icons from [lucide.dev](https://lucide.dev):
 - `public/icons/square-split-horizontal.svg`
 - `public/icons/square-split-vertical.svg`
 - `public/icons/sun.svg`
+- `public/icons/text-align-justify.svg`
 - `public/icons/text-wrap.svg`
