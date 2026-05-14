@@ -921,10 +921,26 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
 
 @media (max-width: 760px) {
     .topbar,
-    .topbar-controls,
     .repo-heading,
     .review-header {
         display: grid;
+    }
+
+    .topbar {
+        align-items: start;
+    }
+
+    .topbar-controls {
+        display: grid;
+        width: 100%;
+        flex-basis: auto;
+        grid-template-columns: repeat(3, max-content);
+        justify-content: start;
+    }
+
+    .topbar-controls .repo-picker {
+        grid-column: 1 / -1;
+        width: min(100%, 360px);
     }
 
     .topbar,
@@ -935,5 +951,12 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
 
     .repo-picker {
         max-width: none;
+    }
+}
+
+@media (max-width: 420px) {
+    .topbar-controls {
+        grid-template-columns: repeat(2, max-content);
+        gap: 12px;
     }
 }
