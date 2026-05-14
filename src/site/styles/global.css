@@ -157,6 +157,60 @@ h1 {
     outline-offset: 1px;
 }
 
+.diff-layout-selector {
+    display: inline-grid;
+    grid-template-columns: repeat(2, minmax(72px, auto));
+    gap: 2px;
+    height: 40px;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 2px;
+    border: 1px solid #bdb4a4;
+    border-radius: 6px;
+    background: #ffffff;
+}
+
+.diff-layout-selector legend {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.diff-layout-selector label {
+    display: grid;
+}
+
+.diff-layout-selector input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.diff-layout-selector span {
+    display: grid;
+    min-width: 0;
+    place-items: center;
+    border-radius: 4px;
+    padding: 0 10px;
+    color: #5d5968;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.diff-layout-selector input:checked + span {
+    background: #075e54;
+    color: #ffffff;
+}
+
+.diff-layout-selector input:focus-visible + span {
+    outline: 3px solid #d8eee7;
+    outline-offset: 1px;
+}
+
 .wrap-toggle {
     display: inline-flex;
     height: 40px;
@@ -610,6 +664,7 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
 }
 
 :root[data-theme="dark"] .theme-selector,
+:root[data-theme="dark"] .diff-layout-selector,
 :root[data-theme="dark"] .repo-picker input,
 :root[data-theme="dark"] .repo-options {
     border-color: #525a64;
@@ -617,16 +672,19 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
     color: #f3f0e8;
 }
 
-:root[data-theme="dark"] .theme-selector .theme-option {
+:root[data-theme="dark"] .theme-selector .theme-option,
+:root[data-theme="dark"] .diff-layout-selector span {
     color: #c9c3b8;
 }
 
-:root[data-theme="dark"] .theme-selector input:checked + .theme-option {
+:root[data-theme="dark"] .theme-selector input:checked + .theme-option,
+:root[data-theme="dark"] .diff-layout-selector input:checked + span {
     background: #5bd0b2;
     color: #10201d;
 }
 
 :root[data-theme="dark"] .theme-selector input:focus-visible + .theme-option,
+:root[data-theme="dark"] .diff-layout-selector input:focus-visible + span,
 :root[data-theme="dark"] .repo-picker input:focus {
     outline-color: rgba(91, 208, 178, 0.28);
 }

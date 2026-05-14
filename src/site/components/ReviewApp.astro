@@ -44,6 +44,17 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
         <span class="wrap-switch" aria-hidden="true"></span>
         <span>Wrap</span>
       </label>
+      <fieldset class="diff-layout-selector" aria-label="Diff layout">
+        <legend>Diff layout</legend>
+        <label>
+          <input type="radio" name="diff-layout" value="split" />
+          <span>Split</span>
+        </label>
+        <label>
+          <input type="radio" name="diff-layout" value="stacked" />
+          <span>Stacked</span>
+        </label>
+      </fieldset>
       <RepositoryPicker repositories={repositories} initialRepo={initialRepo} />
     </div>
   </header>
@@ -111,10 +122,14 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
   const themeSelector = document.querySelector<HTMLElement>(".theme-selector");
   const themeInputs = [...document.querySelectorAll<HTMLInputElement>('input[name="theme"]')];
   const wordWrapInput = document.querySelector<HTMLInputElement>('input[name="word-wrap"]');
+  const diffLayoutSelector = document.querySelector<HTMLElement>(".diff-layout-selector");
+  const diffLayoutInputs = [...document.querySelectorAll<HTMLInputElement>('input[name="diff-layout"]')];
   type ColorMode = "light" | "dark";
   type DiffOverflow = "scroll" | "wrap";
+  type DiffLayout = "split" | "stacked";
 
   const isColorMode = (value: string | null): value is ColorMode => value === "light" || value === "dark";
+  const isDiffLayout = (value: string | null): value is DiffLayout => value === "split" || value === "stacked";
   const getInitialTheme = (): ColorMode => {
     const storedTheme = localStorage.getItem("revisaur:theme");
     if (isColorMode(storedTheme)) {
@@ -125,6 +140,10 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
   };
   const getInitialDiffOverflow = (): DiffOverflow => {
     return localStorage.getItem("revisaur:diff-overflow") === "wrap" ? "wrap" : "scroll";
+  };
+  const getInitialDiffLayout = (): DiffLayout => {
+    const storedLayout = localStorage.getItem("revisaur:diff-layout");
+    return isDiffLayout(storedLayout) ? storedLayout : "split";
   };
 
   const applyTheme = (theme: ColorMode) => {
@@ -144,9 +163,19 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
     }
     document.dispatchEvent(new CustomEvent("diff-overflow:selected", { detail: { overflow } }));
   };
+  const applyDiffLayout = (layout: DiffLayout) => {
+    document.documentElement.dataset.diffLayout = layout;
+    localStorage.setItem("revisaur:diff-layout", layout);
+    diffLayoutSelector?.setAttribute("aria-label", `Diff layout: ${layout}`);
+    for (const input of diffLayoutInputs) {
+      input.checked = input.value === layout;
+    }
+    document.dispatchEvent(new CustomEvent("diff-layout:selected", { detail: { layout } }));
+  };
 
   applyTheme(getInitialTheme());
   applyDiffOverflow(getInitialDiffOverflow());
+  applyDiffLayout(getInitialDiffLayout());
 
   for (const input of themeInputs) {
     input.addEventListener("change", () => {
@@ -158,6 +187,13 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
   wordWrapInput?.addEventListener("change", () => {
     applyDiffOverflow(wordWrapInput.checked ? "wrap" : "scroll");
   });
+  for (const input of diffLayoutInputs) {
+    input.addEventListener("change", () => {
+      if (input.checked && isDiffLayout(input.value)) {
+        applyDiffLayout(input.value);
+      }
+    });
+  }
 
   document.addEventListener("repo:selected", (event) => {
     const selectedRepo = event instanceof CustomEvent ? event.detail.repoId : "";
