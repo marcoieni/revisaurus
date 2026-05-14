@@ -45,8 +45,27 @@ a {
     background: #fffdf8;
 }
 
-.topbar > div:first-child {
+.brand-heading {
+    display: flex;
+    align-items: center;
+    gap: 14px;
     min-width: 0;
+}
+
+.brand-heading img {
+    width: 56px;
+    height: 57px;
+    display: block;
+}
+
+.brand-logo-link {
+    flex: 0 0 auto;
+    border-radius: 6px;
+}
+
+.brand-logo-link:focus-visible {
+    outline: 3px solid #d8eee7;
+    outline-offset: 3px;
 }
 
 .topbar-controls {
