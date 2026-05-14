@@ -9,6 +9,18 @@ const { data } = Astro.props;
 const repositories = data.repositories as Array<Pick<RepositoryConfig, "id" | "name" | "provider" | "url" | "owner" | "repo">>;
 const reviews = data.reviews as PullRequestReview[];
 const initialRepo = data.repositories[0]?.id ?? "";
+const reviewGroups = Array.from(
+  reviews.reduce<Map<string, PullRequestReview[]>>((groups, review) => {
+    const key = `${review.repoId}:${review.pullRequest.provider}:${review.pullRequest.number}`;
+    groups.set(key, [...(groups.get(key) ?? []), review]);
+    return groups;
+  }, new Map()).values(),
+).map((group) =>
+  [...group].sort((a, b) => {
+      const reviewedAtDiff = new Date(b.reviewedAt).getTime() - new Date(a.reviewedAt).getTime();
+      return reviewedAtDiff || b.reviewedCommit.localeCompare(a.reviewedCommit);
+  }),
+);
 
 function getAuthorUrl(review: PullRequestReview): string | undefined {
   if (review.pullRequest.provider !== "github" || review.pullRequest.author === "unknown") {
@@ -78,9 +90,10 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
               <h2><a href={repo.url}>{repositoryLabel(repo)}</a></h2>
             </div>
           </div>
-          {reviews
-            .filter((review) => review.repoId === repo.id)
-            .map((review) => {
+          {reviewGroups
+            .filter(([review]) => review?.repoId === repo.id)
+            .map((reviewGroup) => {
+              const review = reviewGroup[0];
               const authorUrl = getAuthorUrl(review);
 
               return (
@@ -92,29 +105,52 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
                       </button>
                       <div>
                         <a href={review.pullRequest.url}>#{review.pullRequest.number} {review.pullRequest.title}</a>
-                        <p>
+                        <div class="review-commit-row">
                           {authorUrl ? (
                             <a class="review-author" href={authorUrl}>{review.pullRequest.author}</a>
                           ) : (
-                            review.pullRequest.author
-                          )} · {review.reviewedCommit.slice(0, 8)}
-                        </p>
+                            <span>{review.pullRequest.author}</span>
+                          )}
+                          <span aria-hidden="true">·</span>
+                          {reviewGroup.length > 1 ? (
+                            <label class="review-commit-picker">
+                              <span class="sr-only">Reviewed commit</span>
+                              <select>
+                                {reviewGroup.map((optionReview, index) => (
+                                  <option value={String(index)} selected={index === 0}>
+                                    {optionReview.reviewedCommit.slice(0, 8)}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          ) : (
+                            <span>{review.reviewedCommit.slice(0, 8)}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div class="review-meta">
-                      <ReviewIndicator review={review} />
-                      <time datetime={review.reviewedAt}>{new Date(review.reviewedAt).toLocaleString()}</time>
+                      {reviewGroup.map((optionReview, index) => (
+                        <div class="review-variant-meta" data-review-variant={String(index)} hidden={index !== 0}>
+                          <ReviewIndicator review={optionReview} />
+                          <time datetime={optionReview.reviewedAt}>{new Date(optionReview.reviewedAt).toLocaleString()}</time>
+                        </div>
+                      ))}
                     </div>
                   </header>
                   <div class="review-body">
-                    <div class="summary">{review.summary}</div>
-                    {review.error && <pre class="error">{review.error}</pre>}
-                    <div
-                      class="diff-view"
-                      data-patch={encodeURIComponent(review.diff)}
-                      data-comments={encodeURIComponent(JSON.stringify(review.comments))}
-                    >
-                    </div>
+                    {reviewGroup.map((optionReview, index) => (
+                      <div class="review-variant" data-review-variant={String(index)} hidden={index !== 0}>
+                        <div class="summary">{optionReview.summary}</div>
+                        {optionReview.error && <pre class="error">{optionReview.error}</pre>}
+                        <div
+                          class="diff-view"
+                          data-patch={encodeURIComponent(optionReview.diff)}
+                          data-comments={encodeURIComponent(JSON.stringify(optionReview.comments))}
+                        >
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </article>
               );
@@ -220,6 +256,20 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
     input.addEventListener("change", () => {
       if (input.checked && isDiffLayout(input.value)) {
         applyDiffLayout(input.value);
+      }
+    });
+  }
+
+  for (const select of document.querySelectorAll<HTMLSelectElement>(".review-commit-picker select")) {
+    const review = select.closest<HTMLElement>(".review");
+    if (!review) {
+      continue;
+    }
+
+    select.addEventListener("change", () => {
+      const selectedVariant = select.value;
+      for (const variant of review.querySelectorAll<HTMLElement>("[data-review-variant]")) {
+        variant.hidden = variant.dataset.reviewVariant !== selectedVariant;
       }
     });
   }
