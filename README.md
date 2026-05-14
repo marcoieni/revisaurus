@@ -11,7 +11,43 @@ Revisaur reads a TOML configuration file, fetches the last N recently updated pu
 
 The first provider is GitHub. The provider interface is intentionally isolated so GitLab and Forgejo can be added later. The first reviewer is Kiro CLI headless mode, with the reviewer interface ready for other tools such as Codex.
 
-## Quick Start
+## Quick Start from npm
+
+Revisaur requires Node.js 24 or newer. It also expects `pnpm` to be available when building the generated Astro site.
+
+Install it in the project that will run the reviews:
+
+```bash
+npm install --save-dev revisaur
+```
+
+You can also install it globally:
+
+```bash
+npm install --global revisaur
+```
+
+Create a `revisaur.toml` file (see [Configuration](#configuration) for details).
+
+Generate reviews and build the static site:
+
+```bash
+GITHUB_TOKEN=... KIRO_API_KEY=... npx revisaur generate --config revisaur.toml
+```
+
+The generated site is written to `site-dist` by default. To generate review data without building the Astro site, pass `--skip-build`:
+
+```bash
+GITHUB_TOKEN=... KIRO_API_KEY=... npx revisaur generate --config revisaur.toml --skip-build
+```
+
+To try the website without GitHub or reviewer credentials, generate demo data:
+
+```bash
+npx revisaur demo
+```
+
+## Quick Start from source
 
 ```bash
 pnpm install
