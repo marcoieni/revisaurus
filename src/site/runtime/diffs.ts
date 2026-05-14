@@ -2,6 +2,7 @@ import {
     DIFFS_TAG_NAME,
     FileDiff,
     parsePatchFiles,
+    type BaseDiffOptions,
     type DiffLineAnnotation,
     type FileDiffMetadata,
     type ThemeTypes,
@@ -9,7 +10,16 @@ import {
 import { collapseChevronSvg } from "./icons.js";
 
 const diffs: FileDiff<ReviewAnnotation>[] = [];
+const diffRenderState = new Map<
+    FileDiff<ReviewAnnotation>,
+    {
+        container: HTMLElement;
+        fileDiff: FileDiffMetadata;
+        lineAnnotations: DiffLineAnnotation<ReviewAnnotation>[];
+    }
+>();
 const currentTheme = getCurrentTheme();
+let currentOverflow = getCurrentOverflow();
 const copyFileNameLabel = "Copy file name to clipboard";
 
 document.addEventListener("theme:selected", (event) => {
@@ -17,6 +27,27 @@ document.addEventListener("theme:selected", (event) => {
         event instanceof CustomEvent && isThemeType(event.detail?.theme) ? event.detail.theme : getCurrentTheme();
     for (const diff of diffs) {
         diff.setThemeType(theme);
+    }
+});
+
+document.addEventListener("diff-overflow:selected", (event) => {
+    const overflow =
+        event instanceof CustomEvent && isDiffOverflow(event.detail?.overflow)
+            ? event.detail.overflow
+            : getCurrentOverflow();
+    currentOverflow = overflow;
+    for (const diff of diffs) {
+        const renderState = diffRenderState.get(diff);
+        if (!renderState) {
+            continue;
+        }
+        diff.setOptions({ ...diff.options, overflow });
+        diff.render({
+            fileDiff: renderState.fileDiff,
+            fileContainer: renderState.container,
+            forceRender: true,
+            lineAnnotations: renderState.lineAnnotations,
+        });
     }
 });
 
@@ -55,6 +86,7 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
             diff = new FileDiff<ReviewAnnotation>({
                 collapsed,
                 diffStyle: "split",
+                overflow: currentOverflow,
                 theme: {
                     light: "pierre-light",
                     dark: "pierre-dark",
@@ -84,6 +116,11 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
                 },
             });
             diffs.push(diff);
+            diffRenderState.set(diff, {
+                container: element,
+                fileDiff,
+                lineAnnotations,
+            });
 
             diff.render({
                 fileDiff,
@@ -106,8 +143,18 @@ function getCurrentTheme(): ThemeTypes {
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
+function getCurrentOverflow(): NonNullable<BaseDiffOptions["overflow"]> {
+    return isDiffOverflow(document.documentElement.dataset.diffOverflow)
+        ? document.documentElement.dataset.diffOverflow
+        : "scroll";
+}
+
 function isThemeType(value: unknown): value is ThemeTypes {
     return value === "light" || value === "dark";
+}
+
+function isDiffOverflow(value: unknown): value is NonNullable<BaseDiffOptions["overflow"]> {
+    return value === "scroll" || value === "wrap";
 }
 
 function escapeHtml(value: string): string {

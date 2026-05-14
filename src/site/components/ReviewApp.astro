@@ -39,6 +39,11 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
           <span class="sr-only">Dark mode</span>
         </label>
       </fieldset>
+      <label class="wrap-toggle">
+        <input type="checkbox" name="word-wrap" />
+        <span class="wrap-switch" aria-hidden="true"></span>
+        <span>Wrap</span>
+      </label>
       <RepositoryPicker repositories={repositories} initialRepo={initialRepo} />
     </div>
   </header>
@@ -105,7 +110,9 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
   const sections = [...document.querySelectorAll<HTMLElement>(".repo-section")];
   const themeSelector = document.querySelector<HTMLElement>(".theme-selector");
   const themeInputs = [...document.querySelectorAll<HTMLInputElement>('input[name="theme"]')];
+  const wordWrapInput = document.querySelector<HTMLInputElement>('input[name="word-wrap"]');
   type ColorMode = "light" | "dark";
+  type DiffOverflow = "scroll" | "wrap";
 
   const isColorMode = (value: string | null): value is ColorMode => value === "light" || value === "dark";
   const getInitialTheme = (): ColorMode => {
@@ -115,6 +122,9 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
     }
 
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  };
+  const getInitialDiffOverflow = (): DiffOverflow => {
+    return localStorage.getItem("revisaur:diff-overflow") === "wrap" ? "wrap" : "scroll";
   };
 
   const applyTheme = (theme: ColorMode) => {
@@ -126,8 +136,17 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
     }
     document.dispatchEvent(new CustomEvent("theme:selected", { detail: { theme } }));
   };
+  const applyDiffOverflow = (overflow: DiffOverflow) => {
+    document.documentElement.dataset.diffOverflow = overflow;
+    localStorage.setItem("revisaur:diff-overflow", overflow);
+    if (wordWrapInput) {
+      wordWrapInput.checked = overflow === "wrap";
+    }
+    document.dispatchEvent(new CustomEvent("diff-overflow:selected", { detail: { overflow } }));
+  };
 
   applyTheme(getInitialTheme());
+  applyDiffOverflow(getInitialDiffOverflow());
 
   for (const input of themeInputs) {
     input.addEventListener("change", () => {
@@ -136,6 +155,9 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
       }
     });
   }
+  wordWrapInput?.addEventListener("change", () => {
+    applyDiffOverflow(wordWrapInput.checked ? "wrap" : "scroll");
+  });
 
   document.addEventListener("repo:selected", (event) => {
     const selectedRepo = event instanceof CustomEvent ? event.detail.repoId : "";

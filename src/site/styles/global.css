@@ -157,6 +157,65 @@ h1 {
     outline-offset: 1px;
 }
 
+.wrap-toggle {
+    display: inline-flex;
+    height: 40px;
+    align-items: center;
+    gap: 8px;
+    box-sizing: border-box;
+    border: 1px solid #bdb4a4;
+    border-radius: 6px;
+    padding: 0 12px 0 8px;
+    background: #ffffff;
+    color: #171717;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    user-select: none;
+}
+
+.wrap-toggle input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.wrap-switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+    border-radius: 999px;
+    background: #c9c1b4;
+    transition: background 120ms ease;
+}
+
+.wrap-switch::before {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgb(23 23 23 / 20%);
+    content: "";
+    transition: transform 120ms ease;
+}
+
+.wrap-toggle input:checked + .wrap-switch {
+    background: #075e54;
+}
+
+.wrap-toggle input:checked + .wrap-switch::before {
+    transform: translateX(14px);
+}
+
+.wrap-toggle input:focus-visible + .wrap-switch {
+    outline: 3px solid #d8eee7;
+    outline-offset: 2px;
+}
+
 .repo-picker {
     position: relative;
     display: grid;
