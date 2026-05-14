@@ -10,6 +10,7 @@ import { collapseChevronSvg } from "./icons.js";
 
 const diffs: FileDiff<ReviewAnnotation>[] = [];
 const currentTheme = getCurrentTheme();
+const copyFileNameLabel = "Copy file name to clipboard";
 
 document.addEventListener("theme:selected", (event) => {
     const theme =
@@ -74,7 +75,7 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
                     const node = document.createElement("div");
                     node.className = `review-comment ${comment.severity}`;
                     node.style.color = "#171717";
-                    node.innerHTML = `<div class="review-comment-header"><strong>${comment.severity}</strong><button class="copy-location-button" type="button" data-location="${escapeAttribute(location)}" aria-label="Copy ${escapeAttribute(location)}" title="Copy ${escapeAttribute(location)}"><span class="copy-location-icon" aria-hidden="true"></span><span class="sr-only">Copy ${escapeHtml(location)}</span></button></div><p>${escapeHtml(comment.body)}</p>`;
+                    node.innerHTML = `<div class="review-comment-header"><strong>${comment.severity}</strong><button class="copy-location-button" type="button" data-location="${escapeAttribute(location)}" data-tooltip="${copyFileNameLabel}" aria-label="${copyFileNameLabel}"><span class="copy-location-icon" aria-hidden="true"></span><span class="sr-only">${copyFileNameLabel}</span></button></div><p>${escapeHtml(comment.body)}</p>`;
                     const button = node.querySelector<HTMLButtonElement>(".copy-location-button");
                     button?.addEventListener("click", () => {
                         void copyLocation(button, location);
@@ -124,10 +125,10 @@ async function copyLocation(button: HTMLButtonElement, location: string): Promis
         } else if (!copyLocationFallback(location)) {
             throw new Error("Clipboard unavailable");
         }
-        setCopyButtonState(button, "Copied");
+        setCopyButtonState(button, "Copied!");
     } catch {
         if (copyLocationFallback(location)) {
-            setCopyButtonState(button, "Copied");
+            setCopyButtonState(button, "Copied!");
         } else {
             setCopyButtonState(button, "Copy failed");
         }
@@ -138,11 +139,14 @@ function copyLocationFallback(location: string): boolean {
     const field = document.createElement("textarea");
     field.value = location;
     field.setAttribute("readonly", "");
+    field.style.opacity = "0";
     field.style.position = "fixed";
-    field.style.top = "0";
-    field.style.left = "-9999px";
+    field.style.top = "-1px";
+    field.style.left = "-1px";
     document.body.append(field);
+    field.focus();
     field.select();
+    field.setSelectionRange(0, field.value.length);
 
     try {
         const copyCommand = (document as unknown as { execCommand(commandId: string): boolean }).execCommand;
@@ -153,14 +157,15 @@ function copyLocationFallback(location: string): boolean {
 }
 
 function setCopyButtonState(button: HTMLButtonElement, status: string): void {
-    const originalLabel = button.getAttribute("aria-label") ?? "Copy location";
+    const originalLabel = button.dataset.copyLabel ?? button.getAttribute("aria-label") ?? copyFileNameLabel;
+    button.dataset.copyLabel = originalLabel;
     button.setAttribute("aria-label", status);
-    button.title = status;
-    button.dataset.copied = status === "Copied" ? "true" : "false";
+    button.dataset.tooltip = status;
+    button.dataset.copied = status === "Copied!" ? "true" : "false";
 
     window.setTimeout(() => {
         button.setAttribute("aria-label", originalLabel);
-        button.title = originalLabel;
+        button.dataset.tooltip = originalLabel;
         delete button.dataset.copied;
     }, 1400);
 }
