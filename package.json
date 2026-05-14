@@ -6,6 +6,12 @@
     "bin": {
         "revisaur": "./dist/cli/index.js"
     },
+    "files": [
+        "dist",
+        "public",
+        "README.md",
+        "LICENSE-MIT"
+    ],
     "scripts": {
         "build": "tsc -p tsconfig.json",
         "check": "tsc -p tsconfig.json --noEmit && astro check",
@@ -13,6 +19,7 @@
         "dev": "astro dev",
         "format": "prettier --write .",
         "generate": "tsx src/cli/index.ts generate",
+        "prepack": "pnpm run build",
         "site:build": "astro build",
         "test": "vitest run"
     },
