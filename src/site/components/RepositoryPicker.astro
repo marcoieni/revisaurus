@@ -198,9 +198,10 @@ const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
   toggle?.addEventListener("click", () => {
     if (!input || !listbox) return;
 
+    const shouldOpen = listbox.hidden === true;
     input.focus();
     filterOptions("");
-    setOpen(Boolean(listbox.hidden));
+    setOpen(shouldOpen);
   });
 
   options.forEach((option) => {
