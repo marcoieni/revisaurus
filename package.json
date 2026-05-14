@@ -2,6 +2,7 @@
     "name": "revisaur",
     "version": "0.1.0",
     "description": "Generate an Astro website with AI reviews for recently updated pull requests.",
+    "license": "MIT",
     "type": "module",
     "repository": {
         "type": "git",
