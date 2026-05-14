@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "reviews": {
+    "github:github-octoflow-api:184:9f3b7c2d8a1e4f52b6c901df774aa018e8db7210": {
+      "repoId": "github-octoflow-api",
+      "pullRequest": {
+        "provider": "github",
+        "repoId": "github-octoflow-api",
+        "number": 184,
+        "title": "Cache project activity summaries",
+        "url": "https://github.com/example/octoflow-api/pull/184",
+        "author": "riley",
+        "headSha": "9f3b7c2d8a1e4f52b6c901df774aa018e8db7210",
+        "baseSha": "3a44a6b65d734515ab54c97f5ec10af42de4b095",
+        "updatedAt": "2026-05-12T19:50:45.766Z"
+      },
+      "status": "reviewed",
+      "reviewedCommit": "9f3b7c2d8a1e4f52b6c901df774aa018e8db7210",
+      "reviewedAt": "2026-05-12T21:50:45.766Z",
+      "summary": "The cache layer is a useful performance win, but the current key omits the viewer role and can leak activity totals across permission scopes.",
+      "rawOutput": "Found one high-impact cache key issue and one lower-risk invalidation gap around archived projects.",
+      "diff": "diff --git a/src/activity/cache.ts b/src/activity/cache.ts\nindex 7c2a915..c91b0f6 100644\n--- a/src/activity/cache.ts\n+++ b/src/activity/cache.ts\n@@ -1,9 +1,20 @@\n+import { redis } from \"../redis/client\";\n import { loadActivity } from \"./loadActivity\";\n \n-export async function getActivitySummary(projectId: string) {\n-  return loadActivity(projectId);\n+export async function getActivitySummary(projectId: string, viewerRole: string) {\n+  const cacheKey = `activity:${projectId}`;\n+  const cached = await redis.get(cacheKey);\n+\n+  if (cached) {\n+    return JSON.parse(cached);\n+  }\n+\n+  const summary = await loadActivity(projectId, viewerRole);\n+  await redis.set(cacheKey, JSON.stringify(summary), { ex: 300 });\n+  return summary;\n }\ndiff --git a/src/activity/routes.ts b/src/activity/routes.ts\nindex c112243..2d7e401 100644\n--- a/src/activity/routes.ts\n+++ b/src/activity/routes.ts\n@@ -12,7 +12,7 @@ router.get(\"/projects/:projectId/activity\", async (req, res) => {\n   const project = await requireProject(req.params.projectId, req.user.id);\n   const role = await membershipRole(project.id, req.user.id);\n \n-  const summary = await getActivitySummary(project.id);\n+  const summary = await getActivitySummary(project.id, role);\n   res.json({ projectId: project.id, summary });\n });",
+      "comments": [
+        {
+          "path": "src/activity/cache.ts",
+          "line": 5,
+          "side": "right",
+          "severity": "critical",
+          "body": "This key only includes the project id, so a restricted viewer can receive a summary cached for an owner. Include viewerRole or permission scope in the key."
+        },
+        {
+          "path": "src/activity/cache.ts",
+          "line": 14,
+          "side": "right",
+          "severity": "warning",
+          "body": "Consider invalidating this when projects are archived or restored, otherwise the dashboard can show stale activity for up to five minutes."
+        }
+      ]
+    },
+    "github:github-octoflow-api:176:0d7a6c20b863a2b2e22ab986a51271940ac97d54": {
+      "repoId": "github-octoflow-api",
+      "pullRequest": {
+        "provider": "github",
+        "repoId": "github-octoflow-api",
+        "number": 176,
+        "title": "Add bulk invitation endpoint",
+        "url": "https://github.com/example/octoflow-api/pull/176",
+        "author": "sam",
+        "headSha": "0d7a6c20b863a2b2e22ab986a51271940ac97d54",
+        "baseSha": "f92ec884de08f221932e982f3abca3e8ccca94fb",
+        "updatedAt": "2026-05-10T13:50:45.766Z"
+      },
+      "status": "reviewed",
+      "reviewedCommit": "0d7a6c20b863a2b2e22ab986a51271940ac97d54",
+      "reviewedAt": "2026-05-10T14:35:45.766Z",
+      "summary": "The endpoint covers the main workflow and reports partial failures clearly. The validation should reject duplicate emails before sending invitations.",
+      "rawOutput": "Suggested adding duplicate detection and a test for repeated addresses in one request.",
+      "diff": "diff --git a/src/invitations/bulk.ts b/src/invitations/bulk.ts\nindex a11d501..df98215 100644\n--- a/src/invitations/bulk.ts\n+++ b/src/invitations/bulk.ts\n@@ -4,8 +4,18 @@ import { sendInvite } from \"./sendInvite\";\n export async function createBulkInvites(projectId: string, emails: string[]) {\n   const results = [];\n \n-  for (const email of emails) {\n-    results.push(await sendInvite(projectId, email));\n+  for (const email of emails.map((value) => value.trim().toLowerCase())) {\n+    if (!email.includes(\"@\")) {\n+      results.push({ email, status: \"invalid\" });\n+      continue;\n+    }\n+\n+    try {\n+      results.push(await sendInvite(projectId, email));\n+    } catch (error) {\n+      results.push({ email, status: \"failed\" });\n+    }\n   }\n \n   return results;\n }",
+      "comments": [
+        {
+          "path": "src/invitations/bulk.ts",
+          "line": 6,
+          "side": "right",
+          "severity": "suggestion",
+          "body": "Normalize first, then deduplicate the list before the loop. A repeated address currently receives multiple invites."
+        }
+      ]
+    },
+    "github:github-launchpad-web:92:bd441671ac82ac301bb7fbfcd77c9a4d76c255e2": {
+      "repoId": "github-launchpad-web",
+      "pullRequest": {
+        "provider": "github",
+        "repoId": "github-launchpad-web",
+        "number": 92,
+        "title": "Refresh billing settings page",
+        "url": "https://github.com/example/launchpad-web/pull/92",
+        "author": "taylor",
+        "headSha": "bd441671ac82ac301bb7fbfcd77c9a4d76c255e2",
+        "baseSha": "76b4d911f77394b8ff64536b37ec9cd76f80036f",
+        "updatedAt": "2026-05-13T06:50:45.766Z"
+      },
+      "status": "reviewed",
+      "reviewedCommit": "bd441671ac82ac301bb7fbfcd77c9a4d76c255e2",
+      "reviewedAt": "2026-05-13T07:50:45.766Z",
+      "summary": "The layout is clearer and keyboard navigation remains intact. One empty-state branch still renders an enabled submit button with no selected plan.",
+      "rawOutput": "Checked billing settings flow. One submit-state bug found in the empty plan branch.",
+      "diff": "diff --git a/src/pages/billing/Settings.tsx b/src/pages/billing/Settings.tsx\nindex 9a070a1..ac13094 100644\n--- a/src/pages/billing/Settings.tsx\n+++ b/src/pages/billing/Settings.tsx\n@@ -30,10 +30,15 @@ export function BillingSettings({ account, plans }: BillingSettingsProps) {\n       <PlanPicker\n         plans={plans}\n         selectedPlan={selectedPlan}\n         onChange={setSelectedPlan}\n       />\n-      <button type=\"submit\" disabled={isSaving}>\n-        Save billing settings\n+      <button\n+        type=\"submit\"\n+        disabled={isSaving || account.status === \"past_due\"}\n+      >\n+        {isSaving ? \"Saving...\" : \"Save billing settings\"}\n       </button>\n     </form>\n   );\n }",
+      "comments": [
+        {
+          "path": "src/pages/billing/Settings.tsx",
+          "line": 37,
+          "side": "right",
+          "severity": "warning",
+          "body": "This still allows submit when plans is empty and selectedPlan is undefined. Disable until a concrete plan is selected."
+        }
+      ]
+    },
+    "github:github-launchpad-web:88:a4acb7846f86b3b783f7311ea1cc06d1f50b7e81": {
+      "repoId": "github-launchpad-web",
+      "pullRequest": {
+        "provider": "github",
+        "repoId": "github-launchpad-web",
+        "number": 88,
+        "title": "Migrate analytics cards to server data",
+        "url": "https://github.com/example/launchpad-web/pull/88",
+        "author": "avery",
+        "headSha": "a4acb7846f86b3b783f7311ea1cc06d1f50b7e81",
+        "baseSha": "f47dbe2a18d083ada55ff1fcf78fc6e949038935",
+        "updatedAt": "2026-05-08T13:50:45.766Z"
+      },
+      "status": "failed",
+      "reviewedCommit": "a4acb7846f86b3b783f7311ea1cc06d1f50b7e81",
+      "reviewedAt": "2026-05-08T14:10:45.766Z",
+      "summary": "Review failed.",
+      "rawOutput": "",
+      "diff": "diff --git a/src/components/AnalyticsCards.tsx b/src/components/AnalyticsCards.tsx\nindex 51ed23b..5a299ce 100644\n--- a/src/components/AnalyticsCards.tsx\n+++ b/src/components/AnalyticsCards.tsx\n@@ -9,7 +9,7 @@ export function AnalyticsCards({ metrics }: AnalyticsCardsProps) {\n   return (\n     <section className=\"analytics-grid\">\n       {metrics.map((metric) => (\n-        <MetricCard key={metric.label} metric={metric} />\n+        <MetricCard key={metric.id} metric={metric} />\n       ))}\n     </section>\n   );\n }",
+      "comments": [],
+      "error": "Reviewer command exited before producing JSON output."
+    }
+  }
+}
