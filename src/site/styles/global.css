@@ -382,6 +382,46 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
     color: #171717;
 }
 
+.review-comment-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.copy-location-button {
+    display: inline-grid;
+    flex: 0 0 auto;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    appearance: none;
+    border: 0;
+    border-radius: 6px;
+    padding: 0;
+    background: transparent;
+    color: #075e54;
+    cursor: pointer;
+}
+
+.copy-location-button:hover,
+.copy-location-button[data-copied="true"] {
+    background: rgba(7, 94, 84, 0.12);
+}
+
+.copy-location-button:focus-visible {
+    outline: 3px solid #d8eee7;
+    outline-offset: 1px;
+}
+
+.copy-location-icon {
+    width: 16px;
+    height: 16px;
+    background: currentColor;
+    -webkit-mask: url("/icons/file.svg") center / contain no-repeat;
+    mask: url("/icons/file.svg") center / contain no-repeat;
+}
+
 .review-comment p {
     margin-top: 4px;
 }
