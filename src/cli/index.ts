@@ -271,7 +271,7 @@ function demoReviews(): PullRequestReview[] {
             reviewedCommit: "9f3b7c2d8a1e4f52b6c901df774aa018e8db7210",
             reviewedAt: new Date(now - 16 * 60 * 60 * 1000).toISOString(),
             summary:
-                "The cache layer is a useful performance win, but the current key omits the viewer role and can leak activity totals across permission scopes.",
+                "The cache layer is a useful performance win, but the current key omits the viewer role and can leak activity totals across permission scopes.\n\nRecommended follow-up:\n- Partition the cache by viewer role or permission scope.\n- Add coverage for owner-to-viewer cache reuse.",
             rawOutput:
                 "Found one high-impact cache key issue and one lower-risk invalidation gap around archived projects.",
             diff: `diff --git a/src/activity/cache.ts b/src/activity/cache.ts
@@ -314,14 +314,14 @@ index c112243..2d7e401 100644
                     line: 5,
                     side: "right",
                     severity: "critical",
-                    body: "This key only includes the project id, so a restricted viewer can receive a summary cached for an owner. Include viewerRole or permission scope in the key.",
+                    body: "This key only includes the project id, so a restricted viewer can receive a summary cached for an owner.\n\nInclude viewerRole or a permission scope in the key before storing the response.",
                 },
                 {
                     path: "src/activity/cache.ts",
                     line: 14,
                     side: "right",
                     severity: "warning",
-                    body: "Consider invalidating this when projects are archived or restored, otherwise the dashboard can show stale activity for up to five minutes.",
+                    body: "Consider invalidating this when projects are archived or restored.\n\nOtherwise the dashboard can show stale activity for up to five minutes.",
                 },
             ],
         },
@@ -342,7 +342,7 @@ index c112243..2d7e401 100644
             reviewedCommit: "0d7a6c20b863a2b2e22ab986a51271940ac97d54",
             reviewedAt: new Date(now - 3 * 24 * 60 * 60 * 1000 + 45 * 60 * 1000).toISOString(),
             summary:
-                "The endpoint covers the main workflow and reports partial failures clearly. The validation should reject duplicate emails before sending invitations.",
+                "The endpoint covers the main workflow and reports partial failures clearly.\n\nThe validation should reject duplicate emails before sending invitations.",
             rawOutput: "Suggested adding duplicate detection and a test for repeated addresses in one request.",
             diff: `diff --git a/src/invitations/bulk.ts b/src/invitations/bulk.ts
 index a11d501..df98215 100644
@@ -375,7 +375,7 @@ index a11d501..df98215 100644
                     line: 6,
                     side: "right",
                     severity: "suggestion",
-                    body: "Normalize first, then deduplicate the list before the loop. A repeated address currently receives multiple invites.",
+                    body: "Normalize first, then deduplicate the list before the loop.\n\nA repeated address currently receives multiple invites.",
                 },
             ],
         },
@@ -396,7 +396,7 @@ index a11d501..df98215 100644
             reviewedCommit: "bd441671ac82ac301bb7fbfcd77c9a4d76c255e2",
             reviewedAt: new Date(now - 6 * 60 * 60 * 1000).toISOString(),
             summary:
-                "The layout is clearer and keyboard navigation remains intact. One empty-state branch still renders an enabled submit button with no selected plan.",
+                "The layout is clearer and keyboard navigation remains intact.\n\nOne empty-state branch still renders an enabled submit button with no selected plan.",
             rawOutput: "Checked billing settings flow. One submit-state bug found in the empty plan branch.",
             diff: `diff --git a/src/pages/billing/Settings.tsx b/src/pages/billing/Settings.tsx
 index 9a070a1..ac13094 100644
@@ -425,7 +425,7 @@ index 9a070a1..ac13094 100644
                     line: 37,
                     side: "right",
                     severity: "warning",
-                    body: "This still allows submit when plans is empty and selectedPlan is undefined. Disable until a concrete plan is selected.",
+                    body: "This still allows submit when plans is empty and selectedPlan is undefined.\n\nDisable until a concrete plan is selected.",
                 },
             ],
         },

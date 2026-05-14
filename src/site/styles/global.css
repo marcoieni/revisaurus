@@ -611,6 +611,7 @@ h1 {
 .summary {
     padding: 16px 18px;
     line-height: 1.55;
+    white-space: pre-wrap;
 }
 
 .review-collapse-toggle {
@@ -782,7 +783,8 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
 }
 
 .review-comment p {
-    margin-top: 4px;
+    margin: 4px 0 0;
+    white-space: pre-wrap;
 }
 
 .review-comment.critical {
