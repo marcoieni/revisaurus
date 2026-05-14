@@ -20,6 +20,7 @@ const diffRenderState = new Map<
 >();
 const currentTheme = getCurrentTheme();
 let currentOverflow = getCurrentOverflow();
+let currentDiffStyle = getCurrentDiffStyle();
 const copyFileNameLabel = "Copy file name to clipboard";
 
 document.addEventListener("theme:selected", (event) => {
@@ -42,6 +43,27 @@ document.addEventListener("diff-overflow:selected", (event) => {
             continue;
         }
         diff.setOptions({ ...diff.options, overflow });
+        diff.render({
+            fileDiff: renderState.fileDiff,
+            fileContainer: renderState.container,
+            forceRender: true,
+            lineAnnotations: renderState.lineAnnotations,
+        });
+    }
+});
+
+document.addEventListener("diff-layout:selected", (event) => {
+    const diffStyle =
+        event instanceof CustomEvent && isDiffLayout(event.detail?.layout)
+            ? getDiffStyleForLayout(event.detail.layout)
+            : getCurrentDiffStyle();
+    currentDiffStyle = diffStyle;
+    for (const diff of diffs) {
+        const renderState = diffRenderState.get(diff);
+        if (!renderState) {
+            continue;
+        }
+        diff.setOptions({ ...diff.options, diffStyle });
         diff.render({
             fileDiff: renderState.fileDiff,
             fileContainer: renderState.container,
@@ -85,7 +107,7 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
             let diff: FileDiff<ReviewAnnotation>;
             diff = new FileDiff<ReviewAnnotation>({
                 collapsed,
-                diffStyle: "split",
+                diffStyle: currentDiffStyle,
                 overflow: currentOverflow,
                 theme: {
                     light: "pierre-light",
@@ -149,12 +171,25 @@ function getCurrentOverflow(): NonNullable<BaseDiffOptions["overflow"]> {
         : "scroll";
 }
 
+function getCurrentDiffStyle(): NonNullable<BaseDiffOptions["diffStyle"]> {
+    const layout = document.documentElement.dataset.diffLayout ?? localStorage.getItem("revisaur:diff-layout");
+    return isDiffLayout(layout) ? getDiffStyleForLayout(layout) : "split";
+}
+
 function isThemeType(value: unknown): value is ThemeTypes {
     return value === "light" || value === "dark";
 }
 
 function isDiffOverflow(value: unknown): value is NonNullable<BaseDiffOptions["overflow"]> {
     return value === "scroll" || value === "wrap";
+}
+
+function isDiffLayout(value: unknown): value is "split" | "stacked" {
+    return value === "split" || value === "stacked";
+}
+
+function getDiffStyleForLayout(layout: "split" | "stacked"): NonNullable<BaseDiffOptions["diffStyle"]> {
+    return layout === "stacked" ? "unified" : "split";
 }
 
 function escapeHtml(value: string): string {
