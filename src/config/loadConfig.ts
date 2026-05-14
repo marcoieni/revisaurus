@@ -10,6 +10,7 @@ const repositorySchema = z.object({
     url: z.url(),
     max_pull_requests: z.number().int().positive().optional(),
     skipped_authors: z.array(z.string()).optional(),
+    prompt_instructions: z.string().trim().min(1).optional(),
     branch: z.string().optional(),
 });
 
@@ -18,6 +19,7 @@ const configSchema = z.object({
     data_dir: z.string().default(".revisaur/data"),
     max_pull_requests: z.number().int().positive().default(10),
     skipped_authors: z.array(z.string()).default(["renovate", "renovate[bot]", "dependabot", "dependabot[bot]"]),
+    prompt_instructions: z.string().trim().min(1).optional(),
     reviewer: z
         .object({
             kind: z.enum(["kiro", "codex"]).default("kiro"),
@@ -47,6 +49,7 @@ export async function loadConfig(path: string): Promise<RevisaurConfig> {
             branch: repo.branch,
             maxPullRequests: repo.max_pull_requests ?? parsed.max_pull_requests,
             skippedAuthors: repo.skipped_authors ?? parsed.skipped_authors,
+            promptInstructions: repo.prompt_instructions ?? parsed.prompt_instructions,
         };
     });
 
@@ -55,6 +58,7 @@ export async function loadConfig(path: string): Promise<RevisaurConfig> {
         dataDir: parsed.data_dir,
         maxPullRequests: parsed.max_pull_requests,
         skippedAuthors: parsed.skipped_authors,
+        promptInstructions: parsed.prompt_instructions,
         reviewer: {
             kind: parsed.reviewer.kind,
             command: parsed.reviewer.command,

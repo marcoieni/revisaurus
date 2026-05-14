@@ -30,6 +30,7 @@ output_dir = "site-dist"
 data_dir = ".revisaur/data"
 max_pull_requests = 10
 skipped_authors = ["renovate", "renovate[bot]", "dependabot", "dependabot[bot]"]
+prompt_instructions = "Prioritize correctness, security, and regressions over style nits."
 
 [reviewer]
 kind = "kiro"
@@ -43,7 +44,10 @@ name = "Astro"
 provider = "github"
 url = "https://github.com/withastro/astro"
 max_pull_requests = 5
+# prompt_instructions = "Repository-specific instructions override the global prompt_instructions value."
 ```
+
+Use `prompt_instructions` to add reviewer guidance to the generated prompt. A repository-level value overrides the global value for that repository.
 
 Revisaur stores review state in `.revisaur/data/state.json`. A PR commit is reviewed once per repository, PR number, and head SHA. If a PR receives new commits, the changed head SHA causes a new review. Existing reviews are reused when rebuilding the website.
 

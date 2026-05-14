@@ -2,6 +2,7 @@ output_dir = "site-dist"
 data_dir = ".revisaur/data"
 max_pull_requests = 10
 skipped_authors = ["renovate", "renovate[bot]", "dependabot", "dependabot[bot]"]
+prompt_instructions = "Prioritize correctness, security, and regressions over style nits."
 
 [reviewer]
 kind = "kiro"
@@ -15,3 +16,4 @@ name = "Astro"
 provider = "github"
 url = "https://github.com/withastro/astro"
 max_pull_requests = 5
+# prompt_instructions = "Repository-specific instructions override the global prompt_instructions value."

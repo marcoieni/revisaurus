@@ -49,6 +49,7 @@ repositories = [
         const path = await writeConfig(`
 max_pull_requests = 25
 skipped_authors = ["bot"]
+prompt_instructions = "Focus on correctness and security."
 
 [reviewer]
 kind = "codex"
@@ -63,12 +64,14 @@ name = "Display Name"
 url = "https://github.com/example/project"
 max_pull_requests = 3
 skipped_authors = ["repo-bot"]
+prompt_instructions = "Focus on API compatibility."
 branch = "main"
 `);
 
         await expect(loadConfig(path)).resolves.toMatchObject({
             maxPullRequests: 25,
             skippedAuthors: ["bot"],
+            promptInstructions: "Focus on correctness and security.",
             reviewer: {
                 kind: "codex",
                 command: "codex",
@@ -85,6 +88,24 @@ branch = "main"
                     branch: "main",
                     maxPullRequests: 3,
                     skippedAuthors: ["repo-bot"],
+                    promptInstructions: "Focus on API compatibility.",
+                },
+            ],
+        });
+    });
+
+    it("uses global prompt instructions when repositories do not override them", async () => {
+        const path = await writeConfig(`
+prompt_instructions = "Prefer actionable comments."
+
+[[repositories]]
+url = "https://github.com/example/project"
+`);
+
+        await expect(loadConfig(path)).resolves.toMatchObject({
+            repositories: [
+                {
+                    promptInstructions: "Prefer actionable comments.",
                 },
             ],
         });

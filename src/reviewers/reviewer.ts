@@ -4,6 +4,7 @@ export interface ReviewRequest {
     repositoryUrl: string;
     pullRequest: PullRequestSummary;
     diff: string;
+    promptInstructions?: string;
 }
 
 export interface ReviewResult {
