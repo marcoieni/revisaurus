@@ -9,6 +9,7 @@ const { data } = Astro.props;
 const repositories = data.repositories as Array<Pick<RepositoryConfig, "id" | "name" | "provider" | "url" | "owner" | "repo">>;
 const reviews = data.reviews as PullRequestReview[];
 const initialRepo = data.repositories[0]?.id ?? "";
+const projectUrl = "https://github.com/marcoieni/revisaur";
 
 function getAuthorUrl(review: PullRequestReview): string | undefined {
   if (review.pullRequest.provider !== "github" || review.pullRequest.author === "unknown") {
@@ -22,7 +23,9 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
 <main class="app-shell">
   <header class="topbar">
     <div class="brand-heading">
-      <img src="/logo.png" alt="" width="56" height="57" />
+      <a class="brand-logo-link" href={projectUrl} aria-label="Revisaur GitHub repository">
+        <img src="/logo.png" alt="" width="56" height="57" />
+      </a>
       <div>
         <h1>Revisaur</h1>
         <p>AI pull request reviews generated from recent repository activity.</p>
