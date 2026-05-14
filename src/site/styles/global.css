@@ -59,6 +59,21 @@ a {
     min-width: 0;
 }
 
+@media (min-width: 960px) {
+    .topbar {
+        display: grid;
+        flex-wrap: nowrap;
+        grid-template-columns: minmax(0, 1fr) max-content;
+    }
+
+    .topbar-controls {
+        display: grid;
+        flex: 0 1 auto;
+        grid-template-columns: repeat(3, max-content) minmax(320px, 360px);
+        justify-content: end;
+    }
+}
+
 .topbar-controls .has-tooltip,
 .repo-combobox-toggle {
     position: relative;
