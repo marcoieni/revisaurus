@@ -70,6 +70,19 @@ describe("KiroReviewer", () => {
         );
     });
 
+    it("includes configured prompt instructions in the review prompt", async () => {
+        await new KiroReviewer(config()).review({
+            ...request,
+            promptInstructions: "Prioritize compatibility issues.",
+        });
+
+        expect(vi.mocked(execa).mock.calls[0]?.[1]).toEqual(
+            expect.arrayContaining([
+                expect.stringContaining("Additional instructions:\nPrioritize compatibility issues."),
+            ]),
+        );
+    });
+
     it("includes captured output when Kiro exits unsuccessfully", async () => {
         vi.mocked(execa).mockResolvedValueOnce({
             failed: true,

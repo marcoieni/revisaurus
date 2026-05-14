@@ -97,6 +97,7 @@ async function generate(config: RevisaurConfig, skipBuild: boolean, workspace: s
                     repositoryUrl: repo.url,
                     pullRequest,
                     diff,
+                    promptInstructions: repo.promptInstructions,
                 });
                 const review: PullRequestReview = {
                     repoId: repo.id,

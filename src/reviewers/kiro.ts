@@ -45,12 +45,18 @@ export class KiroReviewer implements Reviewer {
 }
 
 function buildPrompt(request: ReviewRequest): string {
+    const configuredInstructions = request.promptInstructions?.trim();
+    const additionalInstructions = configuredInstructions
+        ? `\nAdditional instructions:\n${configuredInstructions}\n`
+        : "";
+
     return `Review this pull request diff.
 
 Repository: ${request.repositoryUrl}
 Pull request: #${request.pullRequest.number} ${request.pullRequest.title}
 Author: ${request.pullRequest.author}
 Head commit: ${request.pullRequest.headSha}
+${additionalInstructions}
 
 Return only valid JSON with this exact shape and no surrounding text:
 {
