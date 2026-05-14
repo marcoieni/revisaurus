@@ -190,6 +190,18 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
   applyDiffOverflow(getInitialDiffOverflow());
   applyDiffLayout(getInitialDiffLayout());
 
+  for (const tooltipControl of document.querySelectorAll<HTMLElement>(".topbar-controls .has-tooltip")) {
+    tooltipControl.addEventListener("pointerdown", () => {
+      tooltipControl.dataset.tooltipDismissed = "true";
+    });
+    tooltipControl.addEventListener("pointerleave", () => {
+      delete tooltipControl.dataset.tooltipDismissed;
+    });
+    tooltipControl.addEventListener("focusout", () => {
+      delete tooltipControl.dataset.tooltipDismissed;
+    });
+  }
+
   for (const input of themeInputs) {
     input.addEventListener("change", () => {
       if (input.checked && isColorMode(input.value)) {
