@@ -512,11 +512,41 @@ h1 {
     min-width: 0;
 }
 
+.review-commit-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    color: #666052;
+}
+
+.review-commit-picker select {
+    min-width: 96px;
+    border: 1px solid #bdb4a4;
+    border-radius: 4px;
+    padding: 2px 26px 2px 8px;
+    background: #ffffff;
+    color: #171717;
+    font: inherit;
+    cursor: pointer;
+}
+
 .review-meta {
     display: inline-flex;
     flex: 0 0 auto;
     gap: 12px;
     align-items: center;
+}
+
+.review-variant-meta {
+    display: inline-flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.review-variant-meta[hidden],
+.review-variant[hidden] {
+    display: none;
 }
 
 .review-status-indicator {
@@ -803,7 +833,8 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
 }
 
 :root[data-theme="dark"] .topbar p,
-:root[data-theme="dark"] .review-header p {
+:root[data-theme="dark"] .review-header p,
+:root[data-theme="dark"] .review-commit-row {
     color: #b7b0a4;
 }
 
@@ -811,7 +842,8 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
 :root[data-theme="dark"] .diff-overflow-selector,
 :root[data-theme="dark"] .diff-layout-selector,
 :root[data-theme="dark"] .repo-picker input,
-:root[data-theme="dark"] .repo-options {
+:root[data-theme="dark"] .repo-options,
+:root[data-theme="dark"] .review-commit-picker select {
     border-color: #525a64;
     background: #232830;
     color: #f3f0e8;

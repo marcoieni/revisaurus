@@ -56,8 +56,8 @@ async function generate(config: RevisaurConfig, skipBuild: boolean, workspace: s
     const statePath = path.join(dataDir, "state.json");
     const state = await loadState(statePath);
     const reviewer = reviewerFor(config.reviewer);
-    // Tracks the current run's site payload while state.reviews remains the full cache.
-    const reviewKeys: string[] = [];
+    // Tracks the current run's pull requests while state.reviews remains the full cache.
+    const currentPullRequests: Array<Pick<PullRequestReview["pullRequest"], "provider" | "repoId" | "number">> = [];
     let cachedReviews = 0;
     let completedReviews = 0;
     let failedReviews = 0;
@@ -74,7 +74,11 @@ async function generate(config: RevisaurConfig, skipBuild: boolean, workspace: s
         for (const pullRequest of pullRequests) {
             const key = reviewKey(pullRequest);
             const label = `${repo.name} PR #${pullRequest.number}`;
-            reviewKeys.push(key);
+            currentPullRequests.push({
+                provider: pullRequest.provider,
+                repoId: pullRequest.repoId,
+                number: pullRequest.number,
+            });
 
             if (isReusableReview(state.reviews[key])) {
                 cachedReviews += 1;
@@ -137,6 +141,16 @@ async function generate(config: RevisaurConfig, skipBuild: boolean, workspace: s
         }
     }
 
+    const cachedReviewsByPullRequest = Object.values(state.reviews);
+    const siteReviews = currentPullRequests.flatMap((pullRequest) =>
+        cachedReviewsByPullRequest.filter(
+            (review) =>
+                review.pullRequest.provider === pullRequest.provider &&
+                review.pullRequest.repoId === pullRequest.repoId &&
+                review.pullRequest.number === pullRequest.number,
+        ),
+    );
+
     await writeJson(
         path.join(dataDir, "site.json"),
         {
@@ -149,9 +163,7 @@ async function generate(config: RevisaurConfig, skipBuild: boolean, workspace: s
                 owner,
                 repo,
             })),
-            reviews: reviewKeys
-                .map((key) => state.reviews[key])
-                .filter((review): review is PullRequestReview => Boolean(review)),
+            reviews: siteReviews,
         },
         { spaces: 2 },
     );
