@@ -58,10 +58,10 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
               const authorUrl = getAuthorUrl(review);
 
               return (
-                <article class="review">
+                <article class="review" data-collapsed>
                   <header class="review-header">
                     <div class="review-heading">
-                      <button class="review-collapse-toggle" type="button" aria-label="Collapse pull request" aria-expanded="true">
+                      <button class="review-collapse-toggle" type="button" aria-label="Expand pull request" aria-expanded="false">
                         <Fragment set:html={collapseChevronSvg} />
                       </button>
                       <div>
