@@ -5,8 +5,8 @@ import { describe, expect, it } from "vitest";
 import { loadConfig } from "./loadConfig.js";
 
 async function writeConfig(source: string): Promise<string> {
-    const dir = await mkdtemp(join(tmpdir(), "revisaurus-config-"));
-    const path = join(dir, "revisaurus.toml");
+    const dir = await mkdtemp(join(tmpdir(), "revisaur-config-"));
+    const path = join(dir, "revisaur.toml");
     await writeFile(path, source);
     return path;
 }
@@ -21,7 +21,7 @@ repositories = [
 
         await expect(loadConfig(path)).resolves.toMatchObject({
             outputDir: "site-dist",
-            dataDir: ".revisaurus/data",
+            dataDir: ".revisaur/data",
             maxPullRequests: 10,
             skippedAuthors: ["renovate", "renovate[bot]", "dependabot", "dependabot[bot]"],
             reviewer: {

@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
 import { emptyState, isReusableReview, loadState, reviewKey, saveState } from "./reviewState.js";
-import type { PullRequestReview, PullRequestSummary, ReviewState } from "../types/revisaurus.js";
+import type { PullRequestReview, PullRequestSummary, ReviewState } from "../types/revisaur.js";
 
 describe("reviewState", () => {
     it("creates an empty versioned state", () => {
@@ -11,13 +11,13 @@ describe("reviewState", () => {
     });
 
     it("returns an empty state when no state file exists", async () => {
-        const dir = await mkdtemp(join(tmpdir(), "revisaurus-state-"));
+        const dir = await mkdtemp(join(tmpdir(), "revisaur-state-"));
 
         await expect(loadState(join(dir, "missing.json"))).resolves.toEqual(emptyState());
     });
 
     it("saves and loads review state JSON", async () => {
-        const dir = await mkdtemp(join(tmpdir(), "revisaurus-state-"));
+        const dir = await mkdtemp(join(tmpdir(), "revisaur-state-"));
         const path = join(dir, "state.json");
         const state: ReviewState = {
             version: 1,

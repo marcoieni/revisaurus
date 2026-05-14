@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { execa } from "execa";
 import { KiroReviewer } from "./kiro.js";
-import type { ReviewerConfig } from "../types/revisaurus.js";
+import type { ReviewerConfig } from "../types/revisaur.js";
 
 vi.mock("execa", () => ({
     execa: vi.fn(async () => ({

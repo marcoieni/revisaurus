@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { parse } from "smol-toml";
 import { z } from "zod";
-import type { RepositoryConfig, RevisaurusConfig } from "../types/revisaurus.js";
+import type { RepositoryConfig, RevisaurConfig } from "../types/revisaur.js";
 
 const repositorySchema = z.object({
     id: z.string().optional(),
@@ -15,7 +15,7 @@ const repositorySchema = z.object({
 
 const configSchema = z.object({
     output_dir: z.string().default("site-dist"),
-    data_dir: z.string().default(".revisaurus/data"),
+    data_dir: z.string().default(".revisaur/data"),
     max_pull_requests: z.number().int().positive().default(10),
     skipped_authors: z.array(z.string()).default(["renovate", "renovate[bot]", "dependabot", "dependabot[bot]"]),
     reviewer: z
@@ -30,7 +30,7 @@ const configSchema = z.object({
     repositories: z.array(repositorySchema).min(1),
 });
 
-export async function loadConfig(path: string): Promise<RevisaurusConfig> {
+export async function loadConfig(path: string): Promise<RevisaurConfig> {
     const source = await readFile(path, "utf8");
     const parsed = configSchema.parse(parse(source));
     const repositories = parsed.repositories.map((repo): RepositoryConfig => {

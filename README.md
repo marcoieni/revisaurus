@@ -1,9 +1,9 @@
-# Revisaurus
+# Revisaur
 
 > [!NOTE]
 > This is still in early development. Come back after I announce this project publicly.
 
-Revisaurus reads a TOML configuration file, fetches the last N recently updated pull requests for each configured repository, runs an AI review for PR head commits that have not been reviewed yet, and generates a static Astro website.
+Revisaur reads a TOML configuration file, fetches the last N recently updated pull requests for each configured repository, runs an AI review for PR head commits that have not been reviewed yet, and generates a static Astro website.
 
 The first provider is GitHub. The provider interface is intentionally isolated so GitLab and Forgejo can be added later. The first reviewer is Kiro CLI headless mode, with the reviewer interface ready for other tools such as Codex.
 
@@ -11,8 +11,8 @@ The first provider is GitHub. The provider interface is intentionally isolated s
 
 ```bash
 pnpm install
-cp examples/revisaurus.toml revisaurus.toml
-GITHUB_TOKEN=... KIRO_API_KEY=... pnpm generate -- --config revisaurus.toml
+cp examples/revisaur.toml revisaur.toml
+GITHUB_TOKEN=... KIRO_API_KEY=... pnpm generate -- --config revisaur.toml
 pnpm dev
 ```
 
@@ -27,7 +27,7 @@ pnpm dev
 
 ```toml
 output_dir = "site-dist"
-data_dir = ".revisaurus/data"
+data_dir = ".revisaur/data"
 max_pull_requests = 10
 skipped_authors = ["renovate", "renovate[bot]", "dependabot", "dependabot[bot]"]
 
@@ -45,7 +45,7 @@ url = "https://github.com/withastro/astro"
 max_pull_requests = 5
 ```
 
-Revisaurus stores review state in `.revisaurus/data/state.json`. A PR commit is reviewed once per repository, PR number, and head SHA. If a PR receives new commits, the changed head SHA causes a new review. Existing reviews are reused when rebuilding the website.
+Revisaur stores review state in `.revisaur/data/state.json`. A PR commit is reviewed once per repository, PR number, and head SHA. If a PR receives new commits, the changed head SHA causes a new review. Existing reviews are reused when rebuilding the website.
 
 ## GitHub Pages
 

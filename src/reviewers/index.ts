@@ -1,6 +1,6 @@
 import { KiroReviewer } from "./kiro.js";
 import type { Reviewer } from "./reviewer.js";
-import type { ReviewerConfig } from "../types/revisaurus.js";
+import type { ReviewerConfig } from "../types/revisaur.js";
 
 export function reviewerFor(config: ReviewerConfig): Reviewer {
     switch (config.kind) {

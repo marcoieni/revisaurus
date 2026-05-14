@@ -1,4 +1,4 @@
-import type { PullRequestSummary, ReviewComment } from "../types/revisaurus.js";
+import type { PullRequestSummary, ReviewComment } from "../types/revisaur.js";
 
 export interface ReviewRequest {
     repositoryUrl: string;

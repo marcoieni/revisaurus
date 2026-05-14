@@ -6,19 +6,17 @@ export default defineConfig({
     output: "static",
     ...(base ? { base } : {}),
     srcDir: "src/site",
-    outDir: process.env.REVISAURUS_OUTPUT_DIR ?? "site-dist",
+    outDir: process.env.REVISAUR_OUTPUT_DIR ?? "site-dist",
     vite: {
         define: {
-            "import.meta.env.REVISAURUS_DATA_DIR": JSON.stringify(
-                process.env.REVISAURUS_DATA_DIR ?? ".revisaurus/data",
-            ),
-            "import.meta.env.REVISAURUS_WORKSPACE": JSON.stringify(process.env.REVISAURUS_WORKSPACE ?? process.cwd()),
+            "import.meta.env.REVISAUR_DATA_DIR": JSON.stringify(process.env.REVISAUR_DATA_DIR ?? ".revisaur/data"),
+            "import.meta.env.REVISAUR_WORKSPACE": JSON.stringify(process.env.REVISAUR_WORKSPACE ?? process.cwd()),
         },
     },
 });
 
 function resolveBasePath() {
-    const configured = process.env.REVISAURUS_BASE_PATH?.trim();
+    const configured = process.env.REVISAUR_BASE_PATH?.trim();
     if (configured) {
         return configured === "/" ? undefined : normalizeBasePath(configured);
     }

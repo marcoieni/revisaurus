@@ -4,8 +4,8 @@ import path from "node:path";
 import ReviewApp from "../components/ReviewApp.astro";
 import "../styles/global.css";
 
-const dataDir = import.meta.env.REVISAURUS_DATA_DIR ?? ".revisaurus/data";
-const workspace = import.meta.env.REVISAURUS_WORKSPACE ?? process.cwd();
+const dataDir = import.meta.env.REVISAUR_DATA_DIR ?? ".revisaur/data";
+const workspace = import.meta.env.REVISAUR_WORKSPACE ?? process.cwd();
 const siteDataPath = path.resolve(workspace, dataDir, "site.json");
 const siteData = JSON.parse(await readFile(siteDataPath, "utf8"));
 ---
@@ -14,7 +14,7 @@ const siteData = JSON.parse(await readFile(siteDataPath, "utf8"));
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Revisaurus</title>
+    <title>Revisaur</title>
   </head>
   <body>
     <ReviewApp data={siteData} />
