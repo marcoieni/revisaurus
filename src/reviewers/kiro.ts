@@ -73,6 +73,7 @@ Return only valid JSON with this exact shape and no surrounding text:
 }
 
 Use "right" for added/new lines and "left" for removed/old lines. Tie all comments to specific diff lines.
+Summaries and comment bodies may contain markdown. Use escaped JSON newlines ("\\n") when they improve readability.
 If there are no findings, return an empty comments array.
 If you cannot complete the review, still return valid JSON with a summary explaining the limitation and an empty comments array.
 
@@ -103,6 +104,7 @@ Return only JSON with this exact shape and no surrounding markdown, prose, or co
 
 Rules:
 - Preserve any specific findings from the previous output.
+- Preserve useful paragraph breaks or bullet-style lines with escaped JSON newlines ("\\n").
 - Tie comments only to specific file paths and line numbers mentioned in the previous output.
 - If no specific comments can be recovered, return an empty comments array.
 - If the previous output says the review could not be completed, put that limitation in summary and return an empty comments array.
