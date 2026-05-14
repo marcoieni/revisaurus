@@ -55,8 +55,9 @@ const indicator = getReviewIndicator(review);
 <span
   class={`review-status-indicator ${indicator.severity}`}
   role="img"
-  title={indicator.title}
+  data-tooltip={indicator.title}
   aria-label={indicator.label}
+  tabindex="0"
 >
   {indicator.severity === "failed" ? "X" : ""}
 </span>
