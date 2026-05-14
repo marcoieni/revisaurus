@@ -45,8 +45,17 @@ a {
     background: #fffdf8;
 }
 
-.topbar > div:first-child {
+.brand-heading {
+    display: flex;
+    align-items: center;
+    gap: 14px;
     min-width: 0;
+}
+
+.brand-heading img {
+    width: 56px;
+    height: 57px;
+    flex: 0 0 auto;
 }
 
 .topbar-controls {
