@@ -237,13 +237,13 @@ h1 {
 }
 
 .theme-selector .theme-option-light::before {
-    -webkit-mask-image: url("/icons/sun.svg");
-    mask-image: url("/icons/sun.svg");
+    -webkit-mask-image: var(--icon-sun);
+    mask-image: var(--icon-sun);
 }
 
 .theme-selector .theme-option-dark::before {
-    -webkit-mask-image: url("/icons/moon.svg");
-    mask-image: url("/icons/moon.svg");
+    -webkit-mask-image: var(--icon-moon);
+    mask-image: var(--icon-moon);
 }
 
 .theme-selector input:checked + .theme-option {
@@ -327,23 +327,23 @@ h1 {
 }
 
 .diff-overflow-selector .control-icon-text-align-justify::before {
-    -webkit-mask-image: url("/icons/text-align-justify.svg");
-    mask-image: url("/icons/text-align-justify.svg");
+    -webkit-mask-image: var(--icon-text-align-justify);
+    mask-image: var(--icon-text-align-justify);
 }
 
 .diff-overflow-selector .control-icon-text-wrap::before {
-    -webkit-mask-image: url("/icons/text-wrap.svg");
-    mask-image: url("/icons/text-wrap.svg");
+    -webkit-mask-image: var(--icon-text-wrap);
+    mask-image: var(--icon-text-wrap);
 }
 
 .diff-layout-selector .control-icon-square-split-horizontal::before {
-    -webkit-mask-image: url("/icons/square-split-horizontal.svg");
-    mask-image: url("/icons/square-split-horizontal.svg");
+    -webkit-mask-image: var(--icon-square-split-horizontal);
+    mask-image: var(--icon-square-split-horizontal);
 }
 
 .diff-layout-selector .control-icon-square-split-vertical::before {
-    -webkit-mask-image: url("/icons/square-split-vertical.svg");
-    mask-image: url("/icons/square-split-vertical.svg");
+    -webkit-mask-image: var(--icon-square-split-vertical);
+    mask-image: var(--icon-square-split-vertical);
 }
 
 .diff-overflow-selector input:checked + span,
@@ -373,23 +373,23 @@ h1 {
 }
 
 .control-icon-text-wrap {
-    -webkit-mask-image: url("/icons/text-wrap.svg");
-    mask-image: url("/icons/text-wrap.svg");
+    -webkit-mask-image: var(--icon-text-wrap);
+    mask-image: var(--icon-text-wrap);
 }
 
 .control-icon-text-align-justify {
-    -webkit-mask-image: url("/icons/text-align-justify.svg");
-    mask-image: url("/icons/text-align-justify.svg");
+    -webkit-mask-image: var(--icon-text-align-justify);
+    mask-image: var(--icon-text-align-justify);
 }
 
 .control-icon-square-split-horizontal {
-    -webkit-mask-image: url("/icons/square-split-horizontal.svg");
-    mask-image: url("/icons/square-split-horizontal.svg");
+    -webkit-mask-image: var(--icon-square-split-horizontal);
+    mask-image: var(--icon-square-split-horizontal);
 }
 
 .control-icon-square-split-vertical {
-    -webkit-mask-image: url("/icons/square-split-vertical.svg");
-    mask-image: url("/icons/square-split-vertical.svg");
+    -webkit-mask-image: var(--icon-square-split-vertical);
+    mask-image: var(--icon-square-split-vertical);
 }
 
 .repo-picker {
@@ -812,8 +812,8 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
     width: 16px;
     height: 16px;
     background: currentColor;
-    -webkit-mask: url("/icons/file.svg") center / contain no-repeat;
-    mask: url("/icons/file.svg") center / contain no-repeat;
+    -webkit-mask: var(--icon-file) center / contain no-repeat;
+    mask: var(--icon-file) center / contain no-repeat;
 }
 
 .review-comment p {

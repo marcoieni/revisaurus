@@ -1,6 +1,7 @@
 ---
 import type { PullRequestReview, RepositoryConfig } from "../../types/revisaur.js";
 import { repositoryLabel } from "../repositories.js";
+import { publicAssetCssUrl, publicAssetPath } from "../runtime/assets.js";
 import { collapseChevronSvg } from "../runtime/icons.js";
 import RepositoryPicker from "./RepositoryPicker.astro";
 import ReviewIndicator from "./ReviewIndicator.astro";
@@ -10,6 +11,18 @@ const repositories = data.repositories as Array<Pick<RepositoryConfig, "id" | "n
 const reviews = data.reviews as PullRequestReview[];
 const initialRepo = data.repositories[0]?.id ?? "";
 const projectUrl = "https://github.com/marcoieni/revisaur";
+const logoUrl = publicAssetPath("logo.png");
+const iconStyle = [
+  ["--icon-file", "icons/file.svg"],
+  ["--icon-moon", "icons/moon.svg"],
+  ["--icon-square-split-horizontal", "icons/square-split-horizontal.svg"],
+  ["--icon-square-split-vertical", "icons/square-split-vertical.svg"],
+  ["--icon-sun", "icons/sun.svg"],
+  ["--icon-text-align-justify", "icons/text-align-justify.svg"],
+  ["--icon-text-wrap", "icons/text-wrap.svg"],
+]
+  .map(([name, path]) => `${name}: ${publicAssetCssUrl(path)}`)
+  .join("; ");
 
 function getAuthorUrl(review: PullRequestReview): string | undefined {
   if (review.pullRequest.provider !== "github" || review.pullRequest.author === "unknown") {
@@ -20,11 +33,11 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
 }
 ---
 
-<main class="app-shell">
+<main class="app-shell" style={iconStyle}>
   <header class="topbar">
     <div class="brand-heading">
       <a class="brand-logo-link" href={projectUrl} aria-label="Revisaur GitHub repository">
-        <img src="/logo.png" alt="" width="56" height="57" />
+        <img src={logoUrl} alt="" width="56" height="57" />
       </a>
       <div>
         <h1>Revisaur</h1>
