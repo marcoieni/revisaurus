@@ -429,6 +429,8 @@ h1 {
 
 .repo-options button {
     display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    align-items: center;
     width: 100%;
     gap: 2px;
     border: 0;
@@ -439,6 +441,25 @@ h1 {
     cursor: pointer;
     font: inherit;
     text-align: left;
+}
+
+.repo-options button::before {
+    display: grid;
+    width: 14px;
+    height: 14px;
+    place-items: center;
+    border: 1px solid #bdb4a4;
+    border-radius: 3px;
+    content: "";
+}
+
+.repo-options button[aria-selected="true"]::before {
+    border-color: #075e54;
+    background: #075e54;
+    color: #ffffff;
+    content: "✓";
+    font-size: 11px;
+    line-height: 1;
 }
 
 .repo-options button:hover,
@@ -834,6 +855,16 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
 
 :root[data-theme="dark"] .repo-options button {
     color: #f3f0e8;
+}
+
+:root[data-theme="dark"] .repo-options button::before {
+    border-color: #525a64;
+}
+
+:root[data-theme="dark"] .repo-options button[aria-selected="true"]::before {
+    border-color: #5bd0b2;
+    background: #5bd0b2;
+    color: #10201d;
 }
 
 :root[data-theme="dark"] .repo-options button:hover,

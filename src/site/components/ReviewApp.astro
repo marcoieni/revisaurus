@@ -264,9 +264,12 @@ function prReviewStateLabel(review: PullRequestReview): string {
   }
 
   document.addEventListener("repo:selected", (event) => {
-    const selectedRepo = event instanceof CustomEvent ? event.detail.repoId : "";
+    const selectedRepoIds = event instanceof CustomEvent && Array.isArray(event.detail.repoIds)
+      ? event.detail.repoIds
+      : [];
+    const showAllRepositories = selectedRepoIds.includes(allRepositoriesId);
     for (const section of sections) {
-      section.hidden = selectedRepo !== allRepositoriesId && section.dataset.repo !== selectedRepo;
+      section.hidden = !showAllRepositories && !selectedRepoIds.includes(section.dataset.repo ?? "");
     }
   });
 

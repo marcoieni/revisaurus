@@ -9,6 +9,7 @@ const { initialRepo, repositories } = Astro.props as {
 
 const allRepositoriesId = "__all";
 const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
+const initialLabel = selectedRepository ? repositoryLabel(selectedRepository) : initialRepo;
 ---
 
 <div class="repo-picker" data-repo-combobox>
@@ -24,8 +25,8 @@ const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
       aria-activedescendant=""
       autocomplete="off"
       spellcheck="false"
-      value={selectedRepository ? repositoryLabel(selectedRepository) : initialRepo}
-      data-selected-repo={initialRepo}
+      value={initialLabel}
+      data-selected-repos={initialRepo}
     />
     <button
       class="repo-combobox-toggle"
@@ -36,7 +37,7 @@ const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
       <span class="topbar-tooltip" aria-hidden="true">Show repositories</span>
     </button>
   </div>
-  <div id="repo-options" class="repo-options" role="listbox" hidden>
+  <div id="repo-options" class="repo-options" role="listbox" aria-multiselectable="true" hidden>
     <button
       id="repo-option-all"
       type="button"
@@ -74,8 +75,46 @@ const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
   const toggle = picker?.querySelector<HTMLButtonElement>(".repo-combobox-toggle");
   const listbox = picker?.querySelector<HTMLElement>("#repo-options");
   const options = [...(picker?.querySelectorAll<HTMLButtonElement>("[data-repo-option]") ?? [])];
+  const allRepositoriesId = "__all";
+  const repoOptions = options.filter((option) => option.dataset.repoId !== allRepositoriesId);
   let visibleOptions = [...options];
   let activeIndex = visibleOptions.findIndex((option) => option.getAttribute("aria-selected") === "true");
+
+  const getSelectedRepoIds = () => {
+    return repoOptions
+      .filter((option) => option.getAttribute("aria-selected") === "true")
+      .map((option) => option.dataset.repoId)
+      .filter((repoId): repoId is string => Boolean(repoId));
+  };
+
+  const formatSelectedRepos = (selectedRepoIds: string[]) => {
+    if (selectedRepoIds.length === 0) return "No repositories";
+    if (selectedRepoIds.length === repoOptions.length) return "All repositories";
+    if (selectedRepoIds.length === 1) {
+      const selected = repoOptions.find((option) => option.dataset.repoId === selectedRepoIds[0]);
+      return selected?.dataset.repoLabel ?? selectedRepoIds[0] ?? "";
+    }
+
+    return `${selectedRepoIds.length} repositories`;
+  };
+
+  const syncSelectedRepos = () => {
+    if (!input || !picker) return;
+
+    const selectedRepoIds = getSelectedRepoIds();
+    const allSelected = selectedRepoIds.length === repoOptions.length;
+    options
+      .find((option) => option.dataset.repoId === allRepositoriesId)
+      ?.setAttribute("aria-selected", String(allSelected));
+    input.value = formatSelectedRepos(selectedRepoIds);
+    input.dataset.selectedRepos = selectedRepoIds.join(",");
+    picker.dispatchEvent(
+      new CustomEvent("repo:selected", {
+        bubbles: true,
+        detail: { repoIds: allSelected ? [allRepositoriesId] : selectedRepoIds },
+      }),
+    );
+  };
 
   const fuzzyScore = (value: string, query: string) => {
     const normalizedQuery = query.toLowerCase();
@@ -155,17 +194,19 @@ const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
     setActive(visibleOptions.length > 0 ? 0 : -1);
   };
 
-  const selectRepo = (option: HTMLButtonElement) => {
+  const toggleRepo = (option: HTMLButtonElement) => {
     if (!input || !picker) return;
 
     const selectedRepo = option.dataset.repoId ?? "";
-    input.value = option.dataset.repoLabel ?? selectedRepo;
-    input.dataset.selectedRepo = selectedRepo;
-    options.forEach((candidate) =>
-      candidate.setAttribute("aria-selected", String(candidate.dataset.repoId === selectedRepo)),
-    );
-    picker.dispatchEvent(new CustomEvent("repo:selected", { bubbles: true, detail: { repoId: selectedRepo } }));
-    setOpen(false);
+    if (selectedRepo === allRepositoriesId) {
+      const shouldSelectAll = option.getAttribute("aria-selected") !== "true";
+      repoOptions.forEach((candidate) => candidate.setAttribute("aria-selected", String(shouldSelectAll)));
+      syncSelectedRepos();
+      return;
+    }
+
+    option.setAttribute("aria-selected", String(option.getAttribute("aria-selected") !== "true"));
+    syncSelectedRepos();
   };
 
   input?.addEventListener("focus", () => {
@@ -203,12 +244,12 @@ const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
       const active = visibleOptions[activeIndex];
       if (active && !listbox?.hidden) {
         event.preventDefault();
-        selectRepo(active);
+        toggleRepo(active);
       }
     }
 
     if (event.key === "Escape") {
-      input.value = options.find((option) => option.dataset.repoId === input.dataset.selectedRepo)?.dataset.repoLabel ?? "";
+      input.value = formatSelectedRepos(getSelectedRepoIds());
       setOpen(false);
     }
   });
@@ -232,14 +273,13 @@ const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
   });
 
   options.forEach((option) => {
-    option.addEventListener("click", () => selectRepo(option));
+    option.addEventListener("click", () => toggleRepo(option));
   });
 
   document.addEventListener("pointerdown", (event) => {
     if (picker?.contains(event.target as Node)) return;
 
-    const selected = options.find((option) => option.dataset.repoId === input?.dataset.selectedRepo);
-    if (input && selected) input.value = selected.dataset.repoLabel ?? "";
+    if (input) input.value = formatSelectedRepos(getSelectedRepoIds());
     setOpen(false);
   });
 </script>
