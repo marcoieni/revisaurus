@@ -9,6 +9,7 @@ import {
 } from "@pierre/diffs";
 import hljs from "highlight.js/lib/core";
 import markdown from "highlight.js/lib/languages/markdown";
+import { commentAddressedKey, loadAddressedState, setAddressedValue, type AddressedComment } from "./addressed.js";
 import { collapseChevronSvg } from "./icons.js";
 
 hljs.registerLanguage("markdown", markdown);
@@ -26,6 +27,7 @@ const currentTheme = getCurrentTheme();
 let currentOverflow = getCurrentOverflow();
 let currentDiffStyle = getCurrentDiffStyle();
 const copyFileNameLabel = "Copy file name to clipboard";
+let addressedState = loadAddressedState();
 
 for (const summary of document.querySelectorAll<HTMLElement>(".summary")) {
     const markdownSource = summary.textContent;
@@ -66,6 +68,7 @@ function updateRenderedDiffOptions(options: {
 }
 
 for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
+    const reviewKey = container.dataset.reviewKey ?? "unknown-review";
     const patch = decodeURIComponent(container.dataset.patch ?? "");
     const comments = parseReviewComments(decodeURIComponent(container.dataset.comments ?? "[]"));
 
@@ -76,18 +79,21 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
         for (const fileDiff of patchSet.files) {
             const element = document.createElement(DIFFS_TAG_NAME);
             const lineAnnotations: DiffLineAnnotation<ReviewAnnotation>[] = comments
-                .filter((comment) => comment.path === fileDiff.name || comment.path === fileDiff.prevName)
-                .map((comment) => ({
+                .map((comment, index) => ({ comment, index }))
+                .filter(({ comment }) => comment.path === fileDiff.name || comment.path === fileDiff.prevName)
+                .map(({ comment, index }) => ({
                     lineNumber: comment.line,
                     side: comment.side === "right" ? ("additions" as const) : ("deletions" as const),
                     metadata: {
+                        addressedKey: commentAddressedKey(reviewKey, comment, index),
                         path: comment.path,
                         line: comment.line,
+                        side: comment.side,
                         severity: comment.severity,
                         body: comment.body,
                     },
                 }));
-            const collapsed = lineAnnotations.length === 0;
+            const collapsed = shouldCollapseFile(lineAnnotations);
             element.toggleAttribute("data-collapsed", collapsed);
 
             const diff = new FileDiff<ReviewAnnotation>({
@@ -109,11 +115,25 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
                 renderAnnotation(annotation) {
                     const comment = annotation.metadata;
                     const location = `${comment.path}:${comment.line.toString()}`;
+                    const addressed = addressedState[comment.addressedKey] ?? false;
                     const node = document.createElement("div");
                     node.className = `review-comment ${comment.severity}`;
+                    node.toggleAttribute("data-addressed", addressed);
                     node.style.color = "#171717";
-                    node.innerHTML = `<div class="review-comment-header"><strong>${comment.severity}</strong><button class="copy-location-button" type="button" data-location="${escapeAttribute(location)}" data-tooltip="${copyFileNameLabel}" aria-label="${copyFileNameLabel}"><span class="copy-location-icon" aria-hidden="true"></span><span class="sr-only">${copyFileNameLabel}</span></button></div>`;
+                    node.innerHTML = `<div class="review-comment-header"><label class="addressed-toggle review-comment-addressed"><input type="checkbox" data-addressed-toggle data-addressed-key="${escapeAttribute(comment.addressedKey)}"${addressed ? " checked" : ""} aria-label="Addressed" /></label><strong>${escapeHtml(comment.severity)}</strong><button class="copy-location-button" type="button" data-location="${escapeAttribute(location)}" data-tooltip="${copyFileNameLabel}" aria-label="${copyFileNameLabel}"><span class="copy-location-icon" aria-hidden="true"></span><span class="sr-only">${copyFileNameLabel}</span></button></div>`;
                     renderMarkdownSource(node, comment.body);
+                    const addressedToggle = node.querySelector<HTMLInputElement>("[data-addressed-toggle]");
+                    addressedToggle?.addEventListener("change", () => {
+                        addressedState = setAddressedValue(
+                            addressedState,
+                            comment.addressedKey,
+                            addressedToggle.checked,
+                        );
+                        node.toggleAttribute("data-addressed", addressedToggle.checked);
+                        if (addressedToggle.checked && shouldCollapseFile(lineAnnotations)) {
+                            setDiffCollapsed(diff, true);
+                        }
+                    });
                     const button = node.querySelector<HTMLButtonElement>(".copy-location-button");
                     button?.addEventListener("click", () => {
                         void copyLocation(button, location);
@@ -236,13 +256,32 @@ function createCollapseButton({
 
     button.addEventListener("click", () => {
         const collapsed = !container.hasAttribute("data-collapsed");
-        container.toggleAttribute("data-collapsed", collapsed);
-        updateCollapseButtonState(button, collapsed);
-        diff.setOptions({ ...diff.options, collapsed });
-        rerenderDiff(diff);
+        setDiffCollapsed(diff, collapsed);
     });
 
     return button;
+}
+
+function shouldCollapseFile(lineAnnotations: DiffLineAnnotation<ReviewAnnotation>[]): boolean {
+    return (
+        lineAnnotations.length === 0 ||
+        lineAnnotations.every((annotation) => addressedState[annotation.metadata.addressedKey] ?? false)
+    );
+}
+
+function setDiffCollapsed(diff: FileDiff<ReviewAnnotation>, collapsed: boolean): void {
+    const renderState = diffRenderState.get(diff);
+    if (!renderState) {
+        return;
+    }
+
+    renderState.container.toggleAttribute("data-collapsed", collapsed);
+    const button = renderState.container.querySelector<HTMLButtonElement>(".diff-collapse-toggle");
+    if (button) {
+        updateCollapseButtonState(button, collapsed);
+    }
+    diff.setOptions({ ...diff.options, collapsed });
+    rerenderDiff(diff);
 }
 
 function rerenderDiff(diff: FileDiff<ReviewAnnotation>): void {
@@ -265,15 +304,12 @@ function updateCollapseButtonState(button: HTMLButtonElement, collapsed: boolean
     button.setAttribute("aria-expanded", String(!collapsed));
 }
 
-interface ReviewAnnotation {
-    path: string;
-    line: number;
-    severity: string;
-    body: string;
+interface ReviewAnnotation extends ReviewCommentData {
+    addressedKey: string;
 }
 
-interface ReviewCommentData extends ReviewAnnotation {
-    side: "left" | "right";
+interface ReviewCommentData extends AddressedComment {
+    severity: string;
 }
 
 function getCustomEventValue(event: Event, key: string): unknown {

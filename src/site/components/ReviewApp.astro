@@ -1,6 +1,7 @@
 ---
 import type { PullRequestReview, RepositoryConfig } from "../../types/revisaur.js";
 import { repositoryLabel } from "../repositories.js";
+import { browserReviewKey, reviewAddressedKey } from "../runtime/addressed.js";
 import { publicAssetCssUrl, publicAssetPath } from "../runtime/assets.js";
 import { collapseChevronSvg } from "../runtime/icons.js";
 import FilterPicker from "./FilterPicker.astro";
@@ -61,6 +62,7 @@ function prReviewStateLabel(review: PullRequestReview): string {
       return "Ready for review";
   }
 }
+
 ---
 
 <main class="app-shell" style={iconStyle}>
@@ -172,10 +174,12 @@ function prReviewStateLabel(review: PullRequestReview): string {
             .map((review) => {
               const authorUrl = getUserUrl(review, review.pullRequest.author);
               const assignees = review.pullRequest.assignees ?? [];
+              const reviewKey = browserReviewKey(review);
 
               return (
                 <article
                   class="review"
+                  data-review-key={reviewKey}
                   data-author={review.pullRequest.author}
                   data-assignees={JSON.stringify(assignees)}
                   data-collapsed
@@ -224,6 +228,14 @@ function prReviewStateLabel(review: PullRequestReview): string {
                       </div>
                     </div>
                     <div class="review-meta">
+                      <label class="addressed-toggle">
+                        <input
+                          type="checkbox"
+                          data-addressed-toggle
+                          data-addressed-key={reviewAddressedKey(reviewKey)}
+                          aria-label="Addressed"
+                        />
+                      </label>
                       <ReviewIndicator review={review} />
                       <time datetime={review.reviewedAt}>{new Date(review.reviewedAt).toLocaleString()}</time>
                     </div>
@@ -233,6 +245,7 @@ function prReviewStateLabel(review: PullRequestReview): string {
                     {review.error && <pre class="error">{review.error}</pre>}
                     <div
                       class="diff-view"
+                      data-review-key={reviewKey}
                       data-patch={encodeURIComponent(review.diff)}
                       data-comments={encodeURIComponent(JSON.stringify(review.comments))}
                     >
@@ -248,6 +261,7 @@ function prReviewStateLabel(review: PullRequestReview): string {
 </main>
 
 <script>
+  import { loadAddressedState, setAddressedValue } from "../runtime/addressed.js";
   import "../runtime/diffs.js";
 
   const sections = [...document.querySelectorAll<HTMLElement>(".repo-section")];
@@ -271,6 +285,7 @@ function prReviewStateLabel(review: PullRequestReview): string {
   let selectedRepoIds = [document.querySelector<HTMLElement>(".repo-section:not([hidden])")?.dataset.repo ?? allRepositoriesId];
   let selectedAuthors = [allAuthorsId];
   let selectedAssignees = [allAssigneesId];
+  let addressedState = loadAddressedState();
   type ColorMode = "light" | "dark";
   type DiffOverflow = "scroll" | "wrap";
   type DiffLayout = "split" | "stacked";
@@ -278,6 +293,38 @@ function prReviewStateLabel(review: PullRequestReview): string {
   const isColorMode = (value: string | null): value is ColorMode => value === "light" || value === "dark";
   const isDiffOverflow = (value: string | null): value is DiffOverflow => value === "scroll" || value === "wrap";
   const isDiffLayout = (value: string | null): value is DiffLayout => value === "split" || value === "stacked";
+  const updateReviewCollapseButton = (button: HTMLButtonElement, collapsed: boolean) => {
+    button.title = collapsed ? "Expand pull request" : "Collapse pull request";
+    button.setAttribute("aria-label", button.title);
+    button.setAttribute("aria-expanded", String(!collapsed));
+  };
+  const setReviewCollapsed = (review: HTMLElement, collapsed: boolean) => {
+    review.toggleAttribute("data-collapsed", collapsed);
+    const button = review.querySelector<HTMLButtonElement>(".review-collapse-toggle");
+    if (button) {
+      updateReviewCollapseButton(button, collapsed);
+    }
+  };
+  const applyAddressedState = (input: HTMLInputElement, addressed: boolean) => {
+    input.checked = addressed;
+    const review = input.closest<HTMLElement>(".review");
+    review?.toggleAttribute("data-addressed", addressed);
+    if (review && addressed) {
+      setReviewCollapsed(review, true);
+    }
+  };
+  const initializeAddressedToggle = (input: HTMLInputElement) => {
+    const addressedKey = input.dataset.addressedKey;
+    if (!addressedKey) {
+      return;
+    }
+
+    applyAddressedState(input, addressedState[addressedKey] ?? false);
+    input.addEventListener("change", () => {
+      addressedState = setAddressedValue(addressedState, addressedKey, input.checked);
+      applyAddressedState(input, input.checked);
+    });
+  };
   const getInitialTheme = (): ColorMode => {
     const storedTheme = localStorage.getItem("revisaur:theme");
     if (isColorMode(storedTheme)) {
@@ -325,6 +372,10 @@ function prReviewStateLabel(review: PullRequestReview): string {
   applyTheme(getInitialTheme());
   applyDiffOverflow(getInitialDiffOverflow());
   applyDiffLayout(getInitialDiffLayout());
+
+  for (const input of document.querySelectorAll<HTMLInputElement>("[data-addressed-toggle]")) {
+    initializeAddressedToggle(input);
+  }
 
   for (const tooltipControl of document.querySelectorAll<HTMLElement>(".topbar-controls .has-tooltip")) {
     tooltipControl.addEventListener("pointerdown", () => {
@@ -450,17 +501,10 @@ function prReviewStateLabel(review: PullRequestReview): string {
       continue;
     }
 
-    const updateReviewCollapseButton = (collapsed: boolean) => {
-      button.title = collapsed ? "Expand pull request" : "Collapse pull request";
-      button.setAttribute("aria-label", button.title);
-      button.setAttribute("aria-expanded", String(!collapsed));
-    };
-
-    updateReviewCollapseButton(review.hasAttribute("data-collapsed"));
+    updateReviewCollapseButton(button, review.hasAttribute("data-collapsed"));
     button.addEventListener("click", () => {
       const collapsed = !review.hasAttribute("data-collapsed");
-      review.toggleAttribute("data-collapsed", collapsed);
-      updateReviewCollapseButton(collapsed);
+      setReviewCollapsed(review, collapsed);
     });
   }
 </script>

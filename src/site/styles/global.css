@@ -634,6 +634,36 @@ h1 {
     align-items: center;
 }
 
+.addressed-toggle {
+    display: inline-grid;
+    grid-template-columns: 16px;
+    align-items: center;
+    gap: 7px;
+    color: #4f4a40;
+    font-size: 0.84rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.addressed-toggle input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: #075e54;
+    cursor: pointer;
+}
+
+.addressed-toggle input:focus-visible {
+    outline: 3px solid #d8eee7;
+    outline-offset: 2px;
+}
+
+.review[data-addressed] .review-header {
+    background: #f1faf6;
+}
+
 .review-status-indicator {
     position: relative;
     display: inline-grid;
@@ -791,8 +821,16 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
 .review-comment-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 12px;
+}
+
+.review-comment-header strong {
+    margin-right: auto;
+}
+
+.review-comment-addressed {
+    color: #4f4a40;
 }
 
 .copy-location-button {
@@ -999,6 +1037,19 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
 :root[data-theme="dark"] .review-header,
 :root[data-theme="dark"] .diff-view {
     border-color: #343940;
+}
+
+:root[data-theme="dark"] .addressed-toggle,
+:root[data-theme="dark"] .review-comment-addressed {
+    color: #c9c3b8;
+}
+
+:root[data-theme="dark"] .addressed-toggle input {
+    accent-color: #5bd0b2;
+}
+
+:root[data-theme="dark"] .review[data-addressed] .review-header {
+    background: #17251f;
 }
 
 :root[data-theme="dark"] .pr-number.draft {
