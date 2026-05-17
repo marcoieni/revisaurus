@@ -17,6 +17,8 @@ export interface ReviewerConfig {
     kind: "codex" | "kiro";
     command: string;
     model?: string;
+    sandbox: "docker" | "none";
+    sandboxImage?: string;
     trustTools: string;
     timeoutSeconds: number;
 }

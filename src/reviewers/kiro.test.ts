@@ -39,6 +39,7 @@ function config(overrides: Partial<ReviewerConfig> = {}): ReviewerConfig {
     return {
         kind: "kiro",
         command: "kiro-cli",
+        sandbox: "none",
         trustTools: "read,grep",
         timeoutSeconds: 900,
         ...overrides,
@@ -67,7 +68,7 @@ describe("KiroReviewer", () => {
         expect(execa).toHaveBeenCalledWith(
             "kiro-cli",
             expect.arrayContaining(["chat", "--no-interactive", "--trust-tools=read,grep"]),
-            expect.objectContaining({ reject: false, timeout: 900_000 }),
+            expect.objectContaining({ extendEnv: false, reject: false, timeout: 900_000 }),
         );
         expect(execa).not.toHaveBeenCalledWith(
             expect.anything(),
@@ -103,8 +104,59 @@ describe("KiroReviewer", () => {
         expect(execa).toHaveBeenCalledWith(
             "kiro-cli",
             expect.any(Array),
-            expect.objectContaining({ env: expectedEnv }),
+            expect.objectContaining({ env: expectedEnv, extendEnv: false }),
         );
+    });
+
+    it("can run Kiro in a Docker sandbox", async () => {
+        process.env.GITHUB_TOKEN = "github-token";
+        process.env.KIRO_API_KEY = "kiro-api-key";
+        process.env.PATH = "/usr/bin";
+        process.env.UNRELATED_SECRET = "another-secret";
+
+        await new KiroReviewer(
+            config({
+                sandbox: "docker",
+                sandboxImage: "ghcr.io/example/kiro-cli:1.2.3",
+            }),
+        ).review(request);
+
+        expect(execa).toHaveBeenCalledWith(
+            "docker",
+            expect.arrayContaining([
+                "run",
+                "--rm",
+                "--cap-drop",
+                "ALL",
+                "--security-opt",
+                "no-new-privileges",
+                "--read-only",
+                "--env",
+                "KIRO_API_KEY",
+                "--env",
+                "HOME=/home/revisaur",
+                "ghcr.io/example/kiro-cli:1.2.3",
+                "kiro-cli",
+                "chat",
+                "--no-interactive",
+                "--trust-tools=read,grep",
+            ]),
+            expect.objectContaining({
+                env: Object.fromEntries([
+                    ["KIRO_API_KEY", "kiro-api-key"],
+                    ["PATH", "/usr/bin"],
+                ]),
+                extendEnv: false,
+            }),
+        );
+    });
+
+    it("requires an image when Docker sandboxing is enabled", async () => {
+        await expect(new KiroReviewer(config({ sandbox: "docker" })).review(request)).rejects.toThrow(
+            'reviewer.sandbox_image is required when reviewer.sandbox is "docker".',
+        );
+
+        expect(execa).not.toHaveBeenCalled();
     });
 
     it("includes configured prompt instructions in the review prompt", async () => {
