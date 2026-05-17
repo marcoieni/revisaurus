@@ -11,9 +11,18 @@ const { data } = Astro.props;
 const repositories = data.repositories as Array<Pick<RepositoryConfig, "id" | "name" | "provider" | "url" | "owner" | "repo">>;
 const reviews = data.reviews as PullRequestReview[];
 const initialRepo = data.repositories[0]?.id ?? "";
-const authors = [...new Set(reviews.map((review) => review.pullRequest.author))].sort((first, second) =>
-  first.localeCompare(second),
-);
+const authors = [
+  ...reviews
+    .reduce((authorsByName, review) => {
+      const repoIds = authorsByName.get(review.pullRequest.author) ?? new Set<string>();
+      repoIds.add(review.repoId);
+      authorsByName.set(review.pullRequest.author, repoIds);
+      return authorsByName;
+    }, new Map<string, Set<string>>())
+    .entries(),
+]
+  .map(([author, repoIds]) => ({ author, repoIds: [...repoIds] }))
+  .sort((first, second) => first.author.localeCompare(second.author));
 const projectUrl = "https://github.com/marcoieni/revisaur";
 const logoUrl = publicAssetPath("logo.png");
 const iconStyle = [
@@ -111,9 +120,10 @@ function prReviewStateLabel(review: PullRequestReview): string {
         eventName="author:selected"
         noSelectionLabel="No authors"
         pluralLabel="authors"
-        options={authors.map((author) => ({
+        options={authors.map(({ author, repoIds }) => ({
           id: author,
           label: author,
+          repoIds,
           search: author,
           selected: true,
         }))}
@@ -189,6 +199,10 @@ function prReviewStateLabel(review: PullRequestReview): string {
   import "../runtime/diffs.js";
 
   const sections = [...document.querySelectorAll<HTMLElement>(".repo-section")];
+  const authorPicker = document.querySelector<HTMLElement>('[data-filter-picker][data-detail-key="authors"]');
+  const authorOptions = [
+    ...(authorPicker?.querySelectorAll<HTMLButtonElement>("[data-filter-option][data-option-repos]") ?? []),
+  ];
   const themeSelector = document.querySelector<HTMLElement>(".theme-selector");
   const themeInputs = [...document.querySelectorAll<HTMLInputElement>('input[name="theme"]')];
   const diffOverflowSelector = document.querySelector<HTMLElement>(".diff-overflow-selector");
@@ -306,10 +320,36 @@ function prReviewStateLabel(review: PullRequestReview): string {
     }
   };
 
+  const availableAuthorsForSelectedRepositories = () => {
+    const showAllRepositories = selectedRepoIds.includes(allRepositoriesId);
+    return authorOptions
+      .filter((option) => {
+        if (showAllRepositories) return true;
+
+        return (option.dataset.optionRepos ?? "")
+          .split(",")
+          .some((repoId) => selectedRepoIds.includes(repoId));
+      })
+      .map((option) => option.dataset.optionId)
+      .filter((optionId): optionId is string => Boolean(optionId));
+  };
+
+  const updateAuthorFilterOptions = () => {
+    authorPicker?.dispatchEvent(
+      new CustomEvent("filter:available-options", {
+        detail: {
+          optionIds: availableAuthorsForSelectedRepositories(),
+          selectAllIfEmpty: true,
+        },
+      }),
+    );
+  };
+
   document.addEventListener("repo:selected", (event) => {
     selectedRepoIds = event instanceof CustomEvent && Array.isArray(event.detail.repoIds)
       ? event.detail.repoIds
       : [];
+    updateAuthorFilterOptions();
     applyReviewFilters();
   });
 
@@ -319,6 +359,8 @@ function prReviewStateLabel(review: PullRequestReview): string {
       : [];
     applyReviewFilters();
   });
+
+  updateAuthorFilterOptions();
 
   for (const button of document.querySelectorAll<HTMLButtonElement>(".review-collapse-toggle")) {
     const review = button.closest<HTMLElement>(".review");

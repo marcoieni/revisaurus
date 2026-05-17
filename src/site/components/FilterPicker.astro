@@ -2,6 +2,7 @@
 export interface FilterOption {
   id: string;
   label: string;
+  repoIds?: string[];
   search: string;
   selected?: boolean;
 }
@@ -93,6 +94,7 @@ const {
             data-filter-option
             data-option-id={option.id}
             data-option-label={option.label}
+            data-option-repos={option.repoIds?.join(",")}
             data-option-search={option.search}
             aria-selected={option.selected ? "true" : "false"}
           >
@@ -148,11 +150,13 @@ const {
     const pluralLabel = picker.dataset.pluralLabel ?? "options";
     const allOptionLabel = picker.dataset.allOptionLabel ?? "All options";
     const selectableOptions = options.filter((option) => option.dataset.optionId !== allOptionId);
+    const availableSelectableOptions = () =>
+      selectableOptions.filter((option) => option.dataset.optionAvailable !== "false");
     let visibleOptions = [...options];
     let activeIndex = visibleOptions.findIndex((option) => option.getAttribute("aria-selected") === "true");
 
     const getSelectedIds = () => {
-      return selectableOptions
+      return availableSelectableOptions()
         .filter((option) => option.getAttribute("aria-selected") === "true")
         .map((option) => option.dataset.optionId)
         .filter((optionId): optionId is string => Boolean(optionId));
@@ -160,7 +164,7 @@ const {
 
     const formatSelectedOptions = (selectedIds: string[]) => {
       if (selectedIds.length === 0) return noSelectionLabel;
-      if (selectedIds.length === selectableOptions.length) return allOptionLabel;
+      if (selectedIds.length === availableSelectableOptions().length) return allOptionLabel;
       if (selectedIds.length === 1) {
         const selected = selectableOptions.find((option) => option.dataset.optionId === selectedIds[0]);
         return selected?.dataset.optionLabel ?? selectedIds[0] ?? "";
@@ -173,7 +177,7 @@ const {
       if (!trigger) return;
 
       const selectedIds = getSelectedIds();
-      const allSelected = selectedIds.length === selectableOptions.length;
+      const allSelected = selectedIds.length > 0 && selectedIds.length === availableSelectableOptions().length;
       options
         .find((option) => option.dataset.optionId === allOptionId)
         ?.setAttribute("aria-selected", String(allSelected));
@@ -224,7 +228,10 @@ const {
           const score = query === "" ? index : fuzzyScore(search, query);
           return { index, option, score };
         })
-        .filter(({ score }) => Number.isFinite(score))
+        .filter(({ option, score }) => {
+          return (option.dataset.optionId === allOptionId || option.dataset.optionAvailable !== "false")
+            && Number.isFinite(score);
+        })
         .sort((first, second) => first.score - second.score || first.index - second.index)
         .map(({ option }) => option);
 
@@ -241,7 +248,12 @@ const {
       const selectedId = option.dataset.optionId ?? "";
       if (selectedId === allOptionId) {
         const shouldSelectAll = option.getAttribute("aria-selected") !== "true";
-        selectableOptions.forEach((candidate) => candidate.setAttribute("aria-selected", String(shouldSelectAll)));
+        selectableOptions.forEach((candidate) => {
+          candidate.setAttribute(
+            "aria-selected",
+            String(shouldSelectAll && candidate.dataset.optionAvailable !== "false"),
+          );
+        });
         syncSelectedOptions();
         return;
       }
@@ -322,6 +334,32 @@ const {
       if (picker.contains(event.target as Node)) return;
 
       setOpen(false);
+    });
+
+    picker.addEventListener("filter:available-options", (event) => {
+      if (!(event instanceof CustomEvent) || !Array.isArray(event.detail.optionIds)) return;
+
+      const availableIds = new Set(event.detail.optionIds.filter((optionId: unknown) => typeof optionId === "string"));
+      let selectedAvailableCount = 0;
+      for (const option of selectableOptions) {
+        const optionId = option.dataset.optionId ?? "";
+        const available = availableIds.has(optionId);
+        option.dataset.optionAvailable = available ? "true" : "false";
+        if (!available) {
+          option.setAttribute("aria-selected", "false");
+          continue;
+        }
+        if (option.getAttribute("aria-selected") === "true") {
+          selectedAvailableCount += 1;
+        }
+      }
+
+      if (event.detail.selectAllIfEmpty === true && selectedAvailableCount === 0) {
+        availableSelectableOptions().forEach((option) => option.setAttribute("aria-selected", "true"));
+      }
+
+      filterOptions();
+      syncSelectedOptions();
     });
 
     syncSelectedOptions();

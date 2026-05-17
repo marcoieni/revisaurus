@@ -78,6 +78,10 @@ a {
     min-width: 0;
 }
 
+.topbar-controls > script {
+    display: none;
+}
+
 @media (min-width: 1280px) {
     .topbar {
         display: grid;
@@ -88,7 +92,7 @@ a {
     .topbar-controls {
         display: grid;
         flex: 0 1 auto;
-        grid-template-columns: repeat(4, max-content);
+        grid-template-columns: repeat(5, max-content);
         justify-content: end;
     }
 }
