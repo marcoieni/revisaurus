@@ -173,7 +173,10 @@ h1 {
     color: #666052;
 }
 
-.sr-only {
+.sr-only,
+.theme-selector legend,
+.diff-overflow-selector legend,
+.diff-layout-selector legend {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -182,80 +185,7 @@ h1 {
     white-space: nowrap;
 }
 
-.theme-selector {
-    display: inline-grid;
-    grid-template-columns: repeat(2, 36px);
-    gap: 2px;
-    height: 40px;
-    box-sizing: border-box;
-    margin: 0;
-    padding: 2px;
-    border: 1px solid #bdb4a4;
-    border-radius: 6px;
-    background: #ffffff;
-}
-
-.theme-selector legend {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-}
-
-.theme-selector label {
-    display: grid;
-}
-
-.theme-selector input {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-}
-
-.theme-selector .theme-option {
-    display: grid;
-    min-width: 0;
-    place-items: center;
-    border-radius: 4px;
-    color: #5d5968;
-    cursor: pointer;
-}
-
-.theme-selector .theme-option::before {
-    width: 18px;
-    height: 18px;
-    background: currentColor;
-    content: "";
-    -webkit-mask-position: center;
-    -webkit-mask-repeat: no-repeat;
-    -webkit-mask-size: contain;
-    mask-position: center;
-    mask-repeat: no-repeat;
-    mask-size: contain;
-}
-
-.theme-selector .theme-option-light::before {
-    -webkit-mask-image: var(--icon-sun);
-    mask-image: var(--icon-sun);
-}
-
-.theme-selector .theme-option-dark::before {
-    -webkit-mask-image: var(--icon-moon);
-    mask-image: var(--icon-moon);
-}
-
-.theme-selector input:checked + .theme-option {
-    background: #075e54;
-    color: #ffffff;
-}
-
-.theme-selector input:focus-visible + .theme-option {
-    outline: 3px solid #d8eee7;
-    outline-offset: 1px;
-}
-
+.theme-selector,
 .diff-overflow-selector,
 .diff-layout-selector {
     display: inline-grid;
@@ -270,21 +200,13 @@ h1 {
     background: #ffffff;
 }
 
-.diff-overflow-selector legend,
-.diff-layout-selector legend {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-}
-
+.theme-selector label,
 .diff-overflow-selector label,
 .diff-layout-selector label {
     display: grid;
 }
 
+.theme-selector input,
 .diff-overflow-selector input,
 .diff-layout-selector input {
     position: absolute;
@@ -292,16 +214,60 @@ h1 {
     pointer-events: none;
 }
 
+.theme-selector .theme-option,
 .diff-overflow-selector label > span:first-of-type,
 .diff-layout-selector label > span:first-of-type {
     display: grid;
-    width: 100%;
-    height: 100%;
     min-width: 0;
     place-items: center;
     border-radius: 4px;
     color: #5d5968;
     cursor: pointer;
+}
+
+.theme-selector .theme-option::before,
+.diff-overflow-selector .control-icon::before,
+.diff-layout-selector .control-icon::before {
+    width: 18px;
+    height: 18px;
+    background: currentColor;
+    content: "";
+    -webkit-mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-position: center;
+    mask-repeat: no-repeat;
+    mask-size: contain;
+}
+
+.diff-overflow-selector label > span:first-of-type,
+.diff-layout-selector label > span:first-of-type {
+    width: 100%;
+    height: 100%;
+}
+
+.theme-selector .theme-option-light::before {
+    -webkit-mask-image: var(--icon-sun);
+    mask-image: var(--icon-sun);
+}
+
+.theme-selector .theme-option-dark::before {
+    -webkit-mask-image: var(--icon-moon);
+    mask-image: var(--icon-moon);
+}
+
+.theme-selector input:checked + .theme-option,
+.diff-overflow-selector input:checked + span,
+.diff-layout-selector input:checked + span {
+    background: #075e54;
+    color: #ffffff;
+}
+
+.theme-selector input:focus-visible + .theme-option,
+.diff-overflow-selector input:focus-visible + span,
+.diff-layout-selector input:focus-visible + span {
+    outline: 3px solid #d8eee7;
+    outline-offset: 1px;
 }
 
 .diff-overflow-selector .control-icon,
@@ -313,17 +279,9 @@ h1 {
 
 .diff-overflow-selector .control-icon::before,
 .diff-layout-selector .control-icon::before {
-    content: "";
     display: block;
     width: 22px;
     height: 22px;
-    background: currentColor;
-    -webkit-mask-position: center;
-    -webkit-mask-repeat: no-repeat;
-    -webkit-mask-size: contain;
-    mask-position: center;
-    mask-repeat: no-repeat;
-    mask-size: contain;
 }
 
 .diff-overflow-selector .control-icon-text-align-justify::before {
@@ -344,18 +302,6 @@ h1 {
 .diff-layout-selector .control-icon-square-split-vertical::before {
     -webkit-mask-image: var(--icon-square-split-vertical);
     mask-image: var(--icon-square-split-vertical);
-}
-
-.diff-overflow-selector input:checked + span,
-.diff-layout-selector input:checked + span {
-    background: #075e54;
-    color: #ffffff;
-}
-
-.diff-overflow-selector input:focus-visible + span,
-.diff-layout-selector input:focus-visible + span {
-    outline: 3px solid #d8eee7;
-    outline-offset: 1px;
 }
 
 .control-icon {
@@ -568,54 +514,6 @@ h1 {
     line-height: 1;
 }
 
-.review-status-indicator::after {
-    position: absolute;
-    z-index: 20;
-    right: 0;
-    top: calc(100% + 8px);
-    width: max-content;
-    max-width: min(240px, 70vw);
-    border-radius: 4px;
-    padding: 6px 8px;
-    background: #171717;
-    color: #ffffff;
-    content: attr(data-tooltip);
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1.2;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(-2px);
-    transition:
-        opacity 80ms ease,
-        transform 80ms ease;
-    white-space: nowrap;
-}
-
-.review-status-indicator::before {
-    position: absolute;
-    z-index: 20;
-    right: 1px;
-    top: calc(100% + 3px);
-    border: 5px solid transparent;
-    border-bottom-color: #171717;
-    content: "";
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(-2px);
-    transition:
-        opacity 80ms ease,
-        transform 80ms ease;
-}
-
-.review-status-indicator:hover::after,
-.review-status-indicator:hover::before,
-.review-status-indicator:focus-visible::after,
-.review-status-indicator:focus-visible::before {
-    opacity: 1;
-    transform: translateY(0);
-}
-
 .review-status-indicator:focus-visible {
     outline: 3px solid #d8eee7;
     outline-offset: 2px;
@@ -648,7 +546,9 @@ h1 {
     white-space: pre-wrap;
 }
 
-.review-collapse-toggle {
+.review-collapse-toggle,
+.diff-collapse-toggle,
+.copy-location-button {
     display: inline-grid;
     flex: 0 0 auto;
     width: 28px;
@@ -661,19 +561,6 @@ h1 {
     border-radius: 6px;
     padding: 0;
     cursor: pointer;
-}
-
-.review-collapse-toggle:hover {
-    background: rgba(93, 89, 104, 0.12);
-}
-
-.review-collapse-toggle svg {
-    fill: currentColor;
-    transition: transform 150ms ease;
-}
-
-.review[data-collapsed] .review-collapse-toggle svg {
-    transform: rotate(-90deg);
 }
 
 .review[data-collapsed] .review-body {
@@ -692,29 +579,18 @@ h1 {
     overflow-x: auto;
 }
 
-.diff-collapse-toggle {
-    width: 28px;
-    height: 28px;
-    display: inline-grid;
-    place-items: center;
-    appearance: none;
-    color: inherit;
-    background: transparent;
-    border: 0;
-    border-radius: 6px;
-    padding: 0;
-    cursor: pointer;
-}
-
+.review-collapse-toggle:hover,
 .diff-collapse-toggle:hover {
     background: rgba(93, 89, 104, 0.12);
 }
 
+.review-collapse-toggle svg,
 .diff-collapse-toggle svg {
     fill: currentColor;
     transition: transform 150ms ease;
 }
 
+.review[data-collapsed] .review-collapse-toggle svg,
 diffs-container[data-collapsed] .diff-collapse-toggle svg {
     transform: rotate(-90deg);
 }
@@ -736,20 +612,10 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
 
 .copy-location-button {
     position: relative;
-    display: inline-grid;
-    flex: 0 0 auto;
-    width: 28px;
-    height: 28px;
-    place-items: center;
-    appearance: none;
-    border: 0;
-    border-radius: 6px;
-    padding: 0;
-    background: transparent;
     color: #075e54;
-    cursor: pointer;
 }
 
+.review-status-indicator::after,
 .copy-location-button::after {
     position: absolute;
     z-index: 20;
@@ -771,13 +637,20 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
     transition:
         opacity 80ms ease,
         transform 80ms ease;
+}
+
+.review-status-indicator::after {
+    white-space: nowrap;
+}
+
+.copy-location-button::after {
     white-space: normal;
 }
 
+.review-status-indicator::before,
 .copy-location-button::before {
     position: absolute;
     z-index: 20;
-    right: 8px;
     top: calc(100% + 3px);
     border: 5px solid transparent;
     border-bottom-color: #171717;
@@ -790,6 +663,18 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
         transform 80ms ease;
 }
 
+.review-status-indicator::before {
+    right: 1px;
+}
+
+.copy-location-button::before {
+    right: 8px;
+}
+
+.review-status-indicator:hover::after,
+.review-status-indicator:hover::before,
+.review-status-indicator:focus-visible::after,
+.review-status-indicator:focus-visible::before,
 .copy-location-button:hover::after,
 .copy-location-button:hover::before,
 .copy-location-button:focus-visible::after,
