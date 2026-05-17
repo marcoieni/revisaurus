@@ -99,6 +99,18 @@ See [docs/github-action.md](docs/github-action.md) for a workflow using the comp
 
 The generated Astro site uses [`@pierre/diffs`](https://diffs.com/) to render pull request patches and line-specific AI review comments.
 
+## Bookmarkable Filters
+
+The generated site stores repository, author, and assignee filters in the URL as you change them, so filtered views can be bookmarked or shared.
+The query parameters are comma-separated IDs:
+
+```text
+?repositories=github-owner-repo&authors=alice,bob&assignees=__all
+```
+
+Use `repositories`, `authors`, and `assignees` to preselect those filters when the page loads. Repository values are repository IDs from the Revisaur configuration.
+Use `__all` for the matching "All" option, or omit a parameter to use the site's default selection.
+
 ## Icons
 
 The site uses the following icons from [lucide.dev](https://lucide.dev):

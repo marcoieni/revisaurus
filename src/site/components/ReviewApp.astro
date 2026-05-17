@@ -260,8 +260,12 @@ function prReviewStateLabel(review: PullRequestReview): string {
   import "../runtime/diffs.js";
 
   const sections = [...document.querySelectorAll<HTMLElement>(".repo-section")];
+  const repositoryPicker = document.querySelector<HTMLElement>('[data-filter-picker][data-detail-key="repoIds"]');
   const authorPicker = document.querySelector<HTMLElement>('[data-filter-picker][data-detail-key="authors"]');
   const assigneePicker = document.querySelector<HTMLElement>('[data-filter-picker][data-detail-key="assignees"]');
+  const repositoryOptions = [
+    ...(repositoryPicker?.querySelectorAll<HTMLButtonElement>("[data-filter-option][data-option-id]") ?? []),
+  ];
   const authorOptions = [
     ...(authorPicker?.querySelectorAll<HTMLButtonElement>("[data-filter-option][data-option-repos]") ?? []),
   ];
@@ -277,9 +281,15 @@ function prReviewStateLabel(review: PullRequestReview): string {
   const allRepositoriesId = "__all";
   const allAuthorsId = "__all";
   const allAssigneesId = "__all";
+  const urlFilterKeys = {
+    repositories: "repositories",
+    authors: "authors",
+    assignees: "assignees",
+  };
   let selectedRepoIds = [document.querySelector<HTMLElement>(".repo-section:not([hidden])")?.dataset.repo ?? allRepositoriesId];
   let selectedAuthors = [allAuthorsId];
   let selectedAssignees = [allAssigneesId];
+  let applyingUrlFilters = false;
   type ColorMode = "light" | "dark";
   type DiffOverflow = "scroll" | "wrap";
   type DiffLayout = "split" | "stacked";
@@ -301,6 +311,82 @@ function prReviewStateLabel(review: PullRequestReview): string {
   const getInitialDiffLayout = (): DiffLayout => {
     const storedLayout = localStorage.getItem("revisaur:diff-layout");
     return isDiffLayout(storedLayout) ? storedLayout : "split";
+  };
+  const optionIds = (options: HTMLButtonElement[]) =>
+    options
+      .map((option) => option.dataset.optionId)
+      .filter((optionId): optionId is string => Boolean(optionId));
+  const parseFilterParam = (params: URLSearchParams, key: string, validIds: Set<string>, fallback: string[]) => {
+    const requestedIds = params
+      .getAll(key)
+      .flatMap((value) => value.split(","))
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    if (requestedIds.length === 0) {
+      return fallback;
+    }
+
+    const selectedIds = requestedIds.filter((id) => id === "__all" || id === "all" || validIds.has(id));
+    const normalizedIds = selectedIds.map((id) => id === "all" ? "__all" : id);
+    return normalizedIds.length > 0 ? [...new Set(normalizedIds)] : fallback;
+  };
+  const selectFilterOptions = (picker: HTMLElement | null, optionIds: string[]) => {
+    picker?.dispatchEvent(
+      new CustomEvent("filter:selected-options", {
+        detail: { optionIds },
+      }),
+    );
+  };
+  const writeFilterParam = (params: URLSearchParams, key: string, selectedIds: string[]) => {
+    if (selectedIds.length === 0) {
+      params.delete(key);
+      return;
+    }
+
+    params.set(key, selectedIds.join(","));
+  };
+  const updateFilterUrl = () => {
+    if (applyingUrlFilters) return;
+
+    const params = new URLSearchParams(window.location.search);
+    writeFilterParam(params, urlFilterKeys.repositories, selectedRepoIds);
+    writeFilterParam(params, urlFilterKeys.authors, selectedAuthors);
+    writeFilterParam(params, urlFilterKeys.assignees, selectedAssignees);
+
+    const query = params.toString();
+    const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+    window.history.replaceState(null, "", nextUrl);
+  };
+  const applyUrlFilters = () => {
+    const params = new URLSearchParams(window.location.search);
+    const repoIds = parseFilterParam(
+      params,
+      urlFilterKeys.repositories,
+      new Set(optionIds(repositoryOptions)),
+      selectedRepoIds,
+    );
+    const authorIds = parseFilterParam(
+      params,
+      urlFilterKeys.authors,
+      new Set(optionIds(authorOptions)),
+      selectedAuthors,
+    );
+    const assigneeIds = parseFilterParam(
+      params,
+      urlFilterKeys.assignees,
+      new Set(optionIds(assigneeOptions)),
+      selectedAssignees,
+    );
+
+    applyingUrlFilters = true;
+    selectFilterOptions(repositoryPicker, repoIds);
+    updateAuthorFilterOptions();
+    updateAssigneeFilterOptions();
+    selectFilterOptions(authorPicker, authorIds);
+    selectFilterOptions(assigneePicker, assigneeIds);
+    applyingUrlFilters = false;
+    applyReviewFilters();
   };
 
   const applyTheme = (theme: ColorMode) => {
@@ -434,6 +520,7 @@ function prReviewStateLabel(review: PullRequestReview): string {
     updateAuthorFilterOptions();
     updateAssigneeFilterOptions();
     applyReviewFilters();
+    updateFilterUrl();
   });
 
   document.addEventListener("author:selected", (event) => {
@@ -441,6 +528,7 @@ function prReviewStateLabel(review: PullRequestReview): string {
       ? event.detail.authors
       : [];
     applyReviewFilters();
+    updateFilterUrl();
   });
 
   document.addEventListener("assignee:selected", (event) => {
@@ -448,10 +536,10 @@ function prReviewStateLabel(review: PullRequestReview): string {
       ? event.detail.assignees
       : [];
     applyReviewFilters();
+    updateFilterUrl();
   });
 
-  updateAuthorFilterOptions();
-  updateAssigneeFilterOptions();
+  applyUrlFilters();
 
   for (const button of document.querySelectorAll<HTMLButtonElement>(".review-collapse-toggle")) {
     const review = button.closest<HTMLElement>(".review");
