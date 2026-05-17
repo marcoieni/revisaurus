@@ -7,7 +7,11 @@ import {
     type FileDiffMetadata,
     type ThemeTypes,
 } from "@pierre/diffs";
+import hljs from "highlight.js/lib/core";
+import markdown from "highlight.js/lib/languages/markdown";
 import { collapseChevronSvg } from "./icons.js";
+
+hljs.registerLanguage("markdown", markdown);
 
 const diffs: FileDiff<ReviewAnnotation>[] = [];
 const diffRenderState = new Map<
@@ -22,6 +26,12 @@ const currentTheme = getCurrentTheme();
 let currentOverflow = getCurrentOverflow();
 let currentDiffStyle = getCurrentDiffStyle();
 const copyFileNameLabel = "Copy file name to clipboard";
+
+for (const summary of document.querySelectorAll<HTMLElement>(".summary")) {
+    const markdownSource = summary.textContent;
+    summary.textContent = "";
+    renderMarkdownSource(summary, markdownSource);
+}
 
 document.addEventListener("theme:selected", (event) => {
     const selectedTheme = getCustomEventValue(event, "theme");
@@ -118,7 +128,8 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
                     const node = document.createElement("div");
                     node.className = `review-comment ${comment.severity}`;
                     node.style.color = "#171717";
-                    node.innerHTML = `<div class="review-comment-header"><strong>${comment.severity}</strong><button class="copy-location-button" type="button" data-location="${escapeAttribute(location)}" data-tooltip="${copyFileNameLabel}" aria-label="${copyFileNameLabel}"><span class="copy-location-icon" aria-hidden="true"></span><span class="sr-only">${copyFileNameLabel}</span></button></div><p>${escapeHtml(comment.body)}</p>`;
+                    node.innerHTML = `<div class="review-comment-header"><strong>${comment.severity}</strong><button class="copy-location-button" type="button" data-location="${escapeAttribute(location)}" data-tooltip="${copyFileNameLabel}" aria-label="${copyFileNameLabel}"><span class="copy-location-icon" aria-hidden="true"></span><span class="sr-only">${copyFileNameLabel}</span></button></div>`;
+                    renderMarkdownSource(node, comment.body);
                     const button = node.querySelector<HTMLButtonElement>(".copy-location-button");
                     button?.addEventListener("click", () => {
                         void copyLocation(button, location);
@@ -187,6 +198,16 @@ function escapeHtml(value: string): string {
 
 function escapeAttribute(value: string): string {
     return escapeHtml(value).replaceAll('"', "&quot;");
+}
+
+function renderMarkdownSource(container: HTMLElement, markdownSource: string): void {
+    const pre = document.createElement("pre");
+    const code = document.createElement("code");
+    pre.className = "markdown-source";
+    code.className = "hljs language-markdown";
+    code.innerHTML = hljs.highlight(markdownSource, { language: "markdown" }).value;
+    pre.append(code);
+    container.append(pre);
 }
 
 async function copyLocation(button: HTMLButtonElement, location: string): Promise<void> {
