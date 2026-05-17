@@ -13,6 +13,10 @@ inputs:
     description: Base path for generated site assets. Defaults to the repository name on GitHub Pages project sites. Use "/" for a root or custom-domain deployment.
     required: false
     default: ""
+  install-kiro-cli:
+    description: Install Kiro CLI on the runner. Set to "false" when using reviewer.sandbox = "docker" with an image that already contains Kiro CLI.
+    required: false
+    default: "true"
 runs:
   using: composite
   steps:
@@ -25,6 +29,7 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
     - name: Install Kiro CLI
+      if: ${{ inputs.install-kiro-cli == 'true' }}
       shell: bash
       run: curl -fsSL https://cli.kiro.dev/install | bash
     # TODO: probably there's a way to avoid installing dependencies when running the action.

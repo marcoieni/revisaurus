@@ -7,6 +7,7 @@ const dataDirKey = "data_dir";
 const maxPullRequestsKey = "max_pull_requests";
 const outputDirKey = "output_dir";
 const promptInstructionsKey = "prompt_instructions";
+const sandboxImageKey = "sandbox_image";
 const skippedAuthorsKey = "skipped_authors";
 const timeoutSecondsKey = "timeout_seconds";
 const trustToolsKey = "trust_tools";
@@ -33,8 +34,19 @@ const configSchema = z.object({
             kind: z.enum(["kiro", "codex"]).default("kiro"),
             command: z.string().default("kiro-cli"),
             model: z.string().trim().min(1).optional(),
+            sandbox: z.enum(["docker", "none"]).default("none"),
+            [sandboxImageKey]: z.string().trim().min(1).optional(),
             [trustToolsKey]: z.string().default("read,grep"),
             [timeoutSecondsKey]: z.number().int().positive().default(900),
+        })
+        .superRefine((reviewer, context) => {
+            if (reviewer.sandbox === "docker" && reviewer.sandbox_image === undefined) {
+                context.addIssue({
+                    code: "custom",
+                    message: 'reviewer.sandbox_image is required when reviewer.sandbox is "docker".',
+                    path: [sandboxImageKey],
+                });
+            }
         })
         .prefault({}),
     repositories: z.array(repositorySchema).min(1),
@@ -71,6 +83,8 @@ export async function loadConfig(path: string): Promise<RevisaurConfig> {
             kind: parsed.reviewer.kind,
             command: parsed.reviewer.command,
             model: parsed.reviewer.model,
+            sandbox: parsed.reviewer.sandbox,
+            sandboxImage: parsed.reviewer.sandbox_image,
             trustTools: parsed.reviewer.trust_tools,
             timeoutSeconds: parsed.reviewer.timeout_seconds,
         },

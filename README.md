@@ -76,6 +76,8 @@ prompt_instructions = "Prioritize correctness, security, and regressions over st
 kind = "kiro"
 command = "kiro-cli"
 model = "claude-opus-4.7"
+# sandbox = "docker"
+# sandbox_image = "ghcr.io/your-org/kiro-cli:tag"
 trust_tools = "read,grep,glob,delegate"
 timeout_seconds = 900
 
@@ -88,6 +90,8 @@ max_pull_requests = 5
 ```
 
 Use `prompt_instructions` to add reviewer guidance to the generated prompt. A repository-level value overrides the global value for that repository.
+
+Set `reviewer.sandbox = "docker"` to run the reviewer subprocess in a Docker container. Docker sandboxing is opt-in and requires `reviewer.sandbox_image`; the image must contain the configured reviewer command, such as `kiro-cli`. Revisaur does not mount the repository checkout into the container and only passes the reviewer API key through to the container environment, so the reviewer sees the PR diff from the prompt but not the workflow `GITHUB_TOKEN`.
 
 Revisaur stores review state in `.revisaur/data/state.json`. A PR commit is reviewed once per repository, PR number, and head SHA. If a PR receives new commits, the changed head SHA causes a new review. Existing reviews are reused when rebuilding the website.
 

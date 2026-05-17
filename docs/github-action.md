@@ -57,4 +57,31 @@ jobs:
 
 The build job is the only job that runs the AI reviewer, so it gets read-only repository permissions and the Kiro API key. The deploy job gets the Pages/OIDC permissions, but it only publishes the generated artifact and does not run the reviewer.
 
+## Docker reviewer sandbox
+
+By default the reviewer subprocess runs directly on the build runner with a restricted environment. To isolate the reviewer process further, configure Docker sandboxing in `revisaur.toml`:
+
+```toml
+[reviewer]
+kind = "kiro"
+command = "kiro-cli"
+sandbox = "docker"
+sandbox_image = "ghcr.io/your-org/kiro-cli:tag"
+trust_tools = "read,grep"
+```
+
+When the sandbox image already contains Kiro CLI, skip the host-runner Kiro install in the action:
+
+```yaml
+- uses: marcoieni/revisaur/action@main
+  with:
+    install-kiro-cli: "false"
+  env:
+    KIRO_API_KEY: ${{ secrets.KIRO_API_KEY }}
+```
+
+The sandbox image must include the configured `command`. Revisaur runs the container without mounting the repository checkout, with a read-only root filesystem, dropped Linux capabilities, `no-new-privileges`, resource limits, and temporary writable `/tmp` and `HOME` filesystems. The Docker client receives only `PATH` and `KIRO_API_KEY`, and the container receives only `KIRO_API_KEY` plus an isolated `HOME`; it does not receive the workflow `GITHUB_TOKEN`.
+
+Docker sandboxing still allows outbound network access because the reviewer CLI needs to reach its AI service. Treat it as process and filesystem isolation, not as a complete network or prompt-injection boundary.
+
 For now the provider implementation supports GitHub repository URLs. The config keeps an explicit `provider` field so GitLab and Forgejo providers can be added without changing the file shape.

@@ -5,6 +5,7 @@ import { stripControlCharacters } from "../utils/sanitizeText.js";
 
 const reviewSeverities = new Set<ReviewComment["severity"]>(["critical", "note", "suggestion", "warning"]);
 const reviewerEnvironmentKeys = ["HOME", "KIRO_API_KEY", "PATH"] as const;
+const dockerReviewerHome = "/home/revisaur";
 const reviewJsonShape = `{
   "summary": "short markdown summary",
   "comments": [
@@ -38,17 +39,14 @@ export class KiroReviewer implements Reviewer {
     }
 
     private async runKiro(prompt: string): Promise<string> {
-        const args = ["chat", "--no-interactive", `--trust-tools=${this.config.trustTools}`];
-        if (this.config.model !== undefined && this.config.model !== "") {
-            args.push("--model", this.config.model);
-        }
-        args.push(prompt);
+        const command = reviewerCommand(this.config, prompt);
 
-        const result = await execa(this.config.command, args, {
+        const result = await execa(command.file, command.args, {
             timeout: this.config.timeoutSeconds * 1000,
             // The reviewer consumes attacker-influenced PR diffs, so do not inherit
             // workflow credentials such as GITHUB_TOKEN.
-            env: reviewerEnvironment(),
+            env: command.env,
+            extendEnv: false,
             reject: false,
         });
 
@@ -61,10 +59,93 @@ export class KiroReviewer implements Reviewer {
     }
 }
 
+function reviewerCommand(
+    config: ReviewerConfig,
+    prompt: string,
+): { args: string[]; env: NodeJS.ProcessEnv; file: string } {
+    const kiroArgs = kiroArgsFor(config, prompt);
+    if (config.sandbox === "docker") {
+        return dockerReviewerCommand(config, kiroArgs);
+    }
+
+    return {
+        file: config.command,
+        args: kiroArgs,
+        env: reviewerEnvironment(),
+    };
+}
+
+function kiroArgsFor(config: ReviewerConfig, prompt: string): string[] {
+    const args = ["chat", "--no-interactive", `--trust-tools=${config.trustTools}`];
+    if (config.model !== undefined && config.model !== "") {
+        args.push("--model", config.model);
+    }
+    args.push(prompt);
+    return args;
+}
+
+function dockerReviewerCommand(
+    config: ReviewerConfig,
+    kiroArgs: string[],
+): { args: string[]; env: NodeJS.ProcessEnv; file: string } {
+    if (config.sandboxImage === undefined || config.sandboxImage === "") {
+        throw new Error('reviewer.sandbox_image is required when reviewer.sandbox is "docker".');
+    }
+
+    return {
+        file: "docker",
+        args: [
+            "run",
+            "--rm",
+            "--network",
+            "bridge",
+            "--cap-drop",
+            "ALL",
+            "--security-opt",
+            "no-new-privileges",
+            "--read-only",
+            "--tmpfs",
+            "/tmp:rw,noexec,nosuid,nodev,size=64m,uid=1000,gid=1000",
+            "--tmpfs",
+            `${dockerReviewerHome}:rw,nosuid,nodev,size=128m,uid=1000,gid=1000`,
+            "--user",
+            "1000:1000",
+            "--workdir",
+            "/tmp",
+            "--pids-limit",
+            "128",
+            "--memory",
+            "1g",
+            "--cpus",
+            "1",
+            "--env",
+            "KIRO_API_KEY",
+            "--env",
+            `HOME=${dockerReviewerHome}`,
+            config.sandboxImage,
+            config.command,
+            ...kiroArgs,
+        ],
+        env: dockerClientEnvironment(),
+    };
+}
+
 function reviewerEnvironment(source: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
     const env: NodeJS.ProcessEnv = {};
 
     for (const key of reviewerEnvironmentKeys) {
+        if (source[key] !== undefined) {
+            env[key] = source[key];
+        }
+    }
+
+    return env;
+}
+
+function dockerClientEnvironment(source: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+    const env: NodeJS.ProcessEnv = {};
+
+    for (const key of ["KIRO_API_KEY", "PATH"] as const) {
         if (source[key] !== undefined) {
             env[key] = source[key];
         }

@@ -27,6 +27,7 @@ repositories = [
             reviewer: {
                 kind: "kiro",
                 command: "kiro-cli",
+                sandbox: "none",
                 trustTools: "read,grep",
                 timeoutSeconds: 900,
             },
@@ -55,6 +56,8 @@ prompt_instructions = "Focus on correctness and security."
 kind = "codex"
 command = "codex"
 model = "claude-sonnet-4.5"
+sandbox = "docker"
+sandbox_image = "ghcr.io/example/codex:1.2.3"
 trust_tools = "read"
 timeout_seconds = 120
 
@@ -76,6 +79,8 @@ branch = "main"
                 kind: "codex",
                 command: "codex",
                 model: "claude-sonnet-4.5",
+                sandbox: "docker",
+                sandboxImage: "ghcr.io/example/codex:1.2.3",
                 trustTools: "read",
                 timeoutSeconds: 120,
             },
@@ -119,5 +124,17 @@ repositories = [
 `);
 
         await expect(loadConfig(path)).rejects.toThrow("Only GitHub repository URLs are supported today");
+    });
+
+    it("requires a reviewer sandbox image when Docker sandboxing is enabled", async () => {
+        const path = await writeConfig(`
+[reviewer]
+sandbox = "docker"
+
+[[repositories]]
+url = "https://github.com/example/project"
+`);
+
+        await expect(loadConfig(path)).rejects.toThrow("reviewer.sandbox_image is required");
     });
 });
