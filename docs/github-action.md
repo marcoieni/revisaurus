@@ -6,6 +6,12 @@ When the action runs in a repository such as `owner/reviews`, Revisaur automatic
 
 Kiro [headless mode](https://kiro.dev/docs/cli/headless/) requires `KIRO_API_KEY`. Create a Kiro API key and store it as a repository secret named `KIRO_API_KEY`. Kiro documents headless mode as `kiro-cli chat --no-interactive`, with API-key auth through the `KIRO_API_KEY` environment variable.
 
+## Run the action
+
+Add a workflow like the example below to `.github/workflows/revisaur.yml` in the repository that should publish the review site. The workflow can run at your favorite schedule, or you can run it manually from GitHub by opening **Actions**, selecting the workflow, and choosing **Run workflow**.
+
+Keep the `concurrency` block in the workflow. Revisaur keeps review state while it generates the site, and the GitHub Pages deploy job also writes to a shared deployment target. The `pages` group ensures only one Revisaur Pages deployment runs at a time, while `cancel-in-progress: false` lets an already running review finish instead of interrupting it when another scheduled or manual run starts.
+
 ```yaml
 name: Revisaur
 
