@@ -318,9 +318,25 @@ function browserReviewKey(review: PullRequestReview): string {
       // Keep the in-memory state for the current page when storage is unavailable.
     }
   }
+  const updateReviewCollapseButton = (button: HTMLButtonElement, collapsed: boolean) => {
+    button.title = collapsed ? "Expand pull request" : "Collapse pull request";
+    button.setAttribute("aria-label", button.title);
+    button.setAttribute("aria-expanded", String(!collapsed));
+  };
+  const setReviewCollapsed = (review: HTMLElement, collapsed: boolean) => {
+    review.toggleAttribute("data-collapsed", collapsed);
+    const button = review.querySelector<HTMLButtonElement>(".review-collapse-toggle");
+    if (button) {
+      updateReviewCollapseButton(button, collapsed);
+    }
+  };
   const applyAddressedState = (input: HTMLInputElement, addressed: boolean) => {
     input.checked = addressed;
-    input.closest<HTMLElement>(".review")?.toggleAttribute("data-addressed", addressed);
+    const review = input.closest<HTMLElement>(".review");
+    review?.toggleAttribute("data-addressed", addressed);
+    if (review && addressed) {
+      setReviewCollapsed(review, true);
+    }
   };
   const initializeAddressedToggle = (input: HTMLInputElement) => {
     const addressedKey = input.dataset.addressedKey;
@@ -511,17 +527,10 @@ function browserReviewKey(review: PullRequestReview): string {
       continue;
     }
 
-    const updateReviewCollapseButton = (collapsed: boolean) => {
-      button.title = collapsed ? "Expand pull request" : "Collapse pull request";
-      button.setAttribute("aria-label", button.title);
-      button.setAttribute("aria-expanded", String(!collapsed));
-    };
-
-    updateReviewCollapseButton(review.hasAttribute("data-collapsed"));
+    updateReviewCollapseButton(button, review.hasAttribute("data-collapsed"));
     button.addEventListener("click", () => {
       const collapsed = !review.hasAttribute("data-collapsed");
-      review.toggleAttribute("data-collapsed", collapsed);
-      updateReviewCollapseButton(collapsed);
+      setReviewCollapsed(review, collapsed);
     });
   }
 </script>
