@@ -1,7 +1,9 @@
 import { execa } from "execa";
 import type { Reviewer, ReviewRequest, ReviewResult } from "./reviewer.js";
-import type { ReviewerConfig } from "../types/revisaur.js";
+import type { ReviewComment, ReviewerConfig } from "../types/revisaur.js";
 import { stripControlCharacters } from "../utils/sanitizeText.js";
+
+const reviewSeverities = new Set<ReviewComment["severity"]>(["critical", "note", "suggestion", "warning"]);
 
 export class KiroReviewer implements Reviewer {
     constructor(private readonly config: ReviewerConfig) {}
@@ -24,7 +26,7 @@ export class KiroReviewer implements Reviewer {
 
     private async runKiro(prompt: string): Promise<string> {
         const args = ["chat", "--no-interactive", `--trust-tools=${this.config.trustTools}`];
-        if (this.config.model) {
+        if (this.config.model !== undefined && this.config.model !== "") {
             args.push("--model", this.config.model);
         }
         args.push(prompt);
@@ -46,14 +48,15 @@ export class KiroReviewer implements Reviewer {
 
 function buildPrompt(request: ReviewRequest): string {
     const configuredInstructions = request.promptInstructions?.trim();
-    const additionalInstructions = configuredInstructions
-        ? `\nAdditional instructions:\n${configuredInstructions}\n`
-        : "";
+    const additionalInstructions =
+        configuredInstructions !== undefined && configuredInstructions !== ""
+            ? `\nAdditional instructions:\n${configuredInstructions}\n`
+            : "";
 
     return `Review this pull request diff.
 
 Repository: ${request.repositoryUrl}
-Pull request: #${request.pullRequest.number} ${request.pullRequest.title}
+Pull request: #${request.pullRequest.number.toString()} ${request.pullRequest.title}
 Author: ${request.pullRequest.author}
 Head commit: ${request.pullRequest.headSha}
 ${additionalInstructions}
@@ -85,7 +88,7 @@ function buildRepairPrompt(request: ReviewRequest, previousOutput: string): stri
     return `Convert the previous pull request review output into valid JSON only.
 
 Repository: ${request.repositoryUrl}
-Pull request: #${request.pullRequest.number} ${request.pullRequest.title}
+Pull request: #${request.pullRequest.number.toString()} ${request.pullRequest.title}
 Head commit: ${request.pullRequest.headSha}
 
 Return only JSON with this exact shape and no surrounding markdown, prose, or code fences:
@@ -122,15 +125,16 @@ function formatReviewerFailure(
     result: { exitCode?: number; timedOut?: boolean; stdout: string; stderr: string },
     rawOutput: string,
 ): string {
-    const reason = result.timedOut
-        ? "Reviewer command timed out"
-        : `Reviewer command exited with code ${result.exitCode ?? "unknown"}`;
+    const reason =
+        result.timedOut === true
+            ? "Reviewer command timed out"
+            : `Reviewer command exited with code ${(result.exitCode ?? "unknown").toString()}`;
     return `${reason}.${previewOutput(rawOutput)}`;
 }
 
 function previewOutput(output: string): string {
     const trimmed = output.trim();
-    if (!trimmed) {
+    if (trimmed === "") {
         return " No reviewer output was captured.";
     }
 
@@ -140,18 +144,55 @@ function previewOutput(output: string): string {
 function parseReviewOutput(stdout: string): ReviewResult {
     const sanitizedOutput = stripControlCharacters(stdout);
     const json = extractJson(sanitizedOutput);
-    const parsed = JSON.parse(json) as Omit<ReviewResult, "rawOutput">;
+    const parsed: unknown = JSON.parse(json);
+    if (!isRecord(parsed)) {
+        throw new Error("Reviewer JSON must be an object.");
+    }
+
+    const summary = typeof parsed.summary === "string" ? parsed.summary : "";
+    const comments = Array.isArray(parsed.comments) ? parsed.comments.flatMap(parseReviewComment) : [];
 
     return {
-        summary: stripControlCharacters(parsed.summary ?? ""),
-        comments: Array.isArray(parsed.comments)
-            ? parsed.comments.map((comment) => ({
-                  ...comment,
-                  body: stripControlCharacters(comment.body ?? ""),
-              }))
-            : [],
+        summary: stripControlCharacters(summary),
+        comments,
         rawOutput: sanitizedOutput,
     };
+}
+
+function parseReviewComment(value: unknown): ReviewComment[] {
+    if (
+        !isRecord(value) ||
+        typeof value.path !== "string" ||
+        typeof value.line !== "number" ||
+        !isReviewSide(value.side) ||
+        !isReviewSeverity(value.severity)
+    ) {
+        return [];
+    }
+
+    const body = typeof value.body === "string" ? value.body : "";
+
+    return [
+        {
+            path: value.path,
+            line: value.line,
+            side: value.side,
+            severity: value.severity,
+            body: stripControlCharacters(body),
+        },
+    ];
+}
+
+function isReviewSide(value: unknown): value is ReviewComment["side"] {
+    return value === "left" || value === "right";
+}
+
+function isReviewSeverity(value: unknown): value is ReviewComment["severity"] {
+    return typeof value === "string" && reviewSeverities.has(value as ReviewComment["severity"]);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null;
 }
 
 function extractJson(output: string): string {

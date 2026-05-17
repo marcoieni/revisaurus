@@ -18,7 +18,7 @@ export async function saveState(path: string, state: ReviewState): Promise<void>
 }
 
 export function reviewKey(pr: PullRequestSummary): string {
-    return `${pr.provider}:${pr.repoId}:${pr.number}:${pr.headSha}`;
+    return `${pr.provider}:${pr.repoId}:${pr.number.toString()}:${pr.headSha}`;
 }
 
 export function isReusableReview(review: PullRequestReview | undefined): boolean {
