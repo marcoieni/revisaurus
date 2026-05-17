@@ -3,6 +3,7 @@ import type { PullRequestReview, RepositoryConfig } from "../../types/revisaur.j
 import { repositoryLabel } from "../repositories.js";
 import { publicAssetCssUrl, publicAssetPath } from "../runtime/assets.js";
 import { collapseChevronSvg } from "../runtime/icons.js";
+import FilterPicker from "./FilterPicker.astro";
 import RepositoryPicker from "./RepositoryPicker.astro";
 import ReviewIndicator from "./ReviewIndicator.astro";
 
@@ -10,6 +11,18 @@ const { data } = Astro.props;
 const repositories = data.repositories as Array<Pick<RepositoryConfig, "id" | "name" | "provider" | "url" | "owner" | "repo">>;
 const reviews = data.reviews as PullRequestReview[];
 const initialRepo = data.repositories[0]?.id ?? "";
+const authors = [
+  ...reviews
+    .reduce((authorsByName, review) => {
+      const repoIds = authorsByName.get(review.pullRequest.author) ?? new Set<string>();
+      repoIds.add(review.repoId);
+      authorsByName.set(review.pullRequest.author, repoIds);
+      return authorsByName;
+    }, new Map<string, Set<string>>())
+    .entries(),
+]
+  .map(([author, repoIds]) => ({ author, repoIds: [...repoIds] }))
+  .sort((first, second) => first.author.localeCompare(second.author));
 const projectUrl = "https://github.com/marcoieni/revisaur";
 const logoUrl = publicAssetPath("logo.png");
 const iconStyle = [
@@ -96,6 +109,25 @@ function prReviewStateLabel(review: PullRequestReview): string {
         </label>
       </fieldset>
       <RepositoryPicker repositories={repositories} initialRepo={initialRepo} />
+      <FilterPicker
+        id="author"
+        label="Author"
+        dialogTitle="Filter by author"
+        placeholder="Filter authors"
+        allOptionLabel="All authors"
+        allOptionSearch="All authors all"
+        detailKey="authors"
+        eventName="author:selected"
+        noSelectionLabel="No authors"
+        pluralLabel="authors"
+        options={authors.map(({ author, repoIds }) => ({
+          id: author,
+          label: author,
+          repoIds,
+          search: author,
+          selected: true,
+        }))}
+      />
     </div>
   </header>
 
@@ -114,7 +146,7 @@ function prReviewStateLabel(review: PullRequestReview): string {
               const authorUrl = getAuthorUrl(review);
 
               return (
-                <article class="review" data-collapsed>
+                <article class="review" data-author={review.pullRequest.author} data-collapsed>
                   <header class="review-header">
                     <div class="review-heading">
                       <button class="review-collapse-toggle" type="button" aria-label="Expand pull request" aria-expanded="false">
@@ -167,6 +199,10 @@ function prReviewStateLabel(review: PullRequestReview): string {
   import "../runtime/diffs.js";
 
   const sections = [...document.querySelectorAll<HTMLElement>(".repo-section")];
+  const authorPicker = document.querySelector<HTMLElement>('[data-filter-picker][data-detail-key="authors"]');
+  const authorOptions = [
+    ...(authorPicker?.querySelectorAll<HTMLButtonElement>("[data-filter-option][data-option-repos]") ?? []),
+  ];
   const themeSelector = document.querySelector<HTMLElement>(".theme-selector");
   const themeInputs = [...document.querySelectorAll<HTMLInputElement>('input[name="theme"]')];
   const diffOverflowSelector = document.querySelector<HTMLElement>(".diff-overflow-selector");
@@ -174,6 +210,9 @@ function prReviewStateLabel(review: PullRequestReview): string {
   const diffLayoutSelector = document.querySelector<HTMLElement>(".diff-layout-selector");
   const diffLayoutInputs = [...document.querySelectorAll<HTMLInputElement>('input[name="diff-layout"]')];
   const allRepositoriesId = "__all";
+  const allAuthorsId = "__all";
+  let selectedRepoIds = [document.querySelector<HTMLElement>(".repo-section:not([hidden])")?.dataset.repo ?? allRepositoriesId];
+  let selectedAuthors = [allAuthorsId];
   type ColorMode = "light" | "dark";
   type DiffOverflow = "scroll" | "wrap";
   type DiffLayout = "split" | "stacked";
@@ -263,15 +302,65 @@ function prReviewStateLabel(review: PullRequestReview): string {
     });
   }
 
+  const applyReviewFilters = () => {
+    const showAllRepositories = selectedRepoIds.includes(allRepositoriesId);
+    const showAllAuthors = selectedAuthors.includes(allAuthorsId);
+
+    for (const section of sections) {
+      const repoMatches = showAllRepositories || selectedRepoIds.includes(section.dataset.repo ?? "");
+      let hasVisibleReviews = false;
+
+      for (const review of section.querySelectorAll<HTMLElement>(".review")) {
+        const authorMatches = showAllAuthors || selectedAuthors.includes(review.dataset.author ?? "");
+        review.hidden = !authorMatches;
+        hasVisibleReviews = hasVisibleReviews || authorMatches;
+      }
+
+      section.hidden = !repoMatches || (!showAllAuthors && !hasVisibleReviews);
+    }
+  };
+
+  const availableAuthorsForSelectedRepositories = () => {
+    const showAllRepositories = selectedRepoIds.includes(allRepositoriesId);
+    return authorOptions
+      .filter((option) => {
+        if (showAllRepositories) return true;
+
+        return (option.dataset.optionRepos ?? "")
+          .split(",")
+          .some((repoId) => selectedRepoIds.includes(repoId));
+      })
+      .map((option) => option.dataset.optionId)
+      .filter((optionId): optionId is string => Boolean(optionId));
+  };
+
+  const updateAuthorFilterOptions = () => {
+    authorPicker?.dispatchEvent(
+      new CustomEvent("filter:available-options", {
+        detail: {
+          optionIds: availableAuthorsForSelectedRepositories(),
+          selectAllIfEmpty: true,
+        },
+      }),
+    );
+  };
+
   document.addEventListener("repo:selected", (event) => {
-    const selectedRepoIds = event instanceof CustomEvent && Array.isArray(event.detail.repoIds)
+    selectedRepoIds = event instanceof CustomEvent && Array.isArray(event.detail.repoIds)
       ? event.detail.repoIds
       : [];
-    const showAllRepositories = selectedRepoIds.includes(allRepositoriesId);
-    for (const section of sections) {
-      section.hidden = !showAllRepositories && !selectedRepoIds.includes(section.dataset.repo ?? "");
-    }
+    updateAuthorFilterOptions();
+    applyReviewFilters();
   });
+
+  document.addEventListener("author:selected", (event) => {
+    selectedAuthors = event instanceof CustomEvent && Array.isArray(event.detail.authors)
+      ? event.detail.authors
+      : [];
+    applyReviewFilters();
+  });
+
+  updateAuthorFilterOptions();
 
   for (const button of document.querySelectorAll<HTMLButtonElement>(".review-collapse-toggle")) {
     const review = button.closest<HTMLElement>(".review");

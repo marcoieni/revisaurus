@@ -1,0 +1,370 @@
+---
+export interface FilterOption {
+  id: string;
+  label: string;
+  repoIds?: string[];
+  search: string;
+  selected?: boolean;
+}
+
+const {
+  allOptionId = "__all",
+  allOptionLabel,
+  allOptionSearch,
+  detailKey,
+  dialogTitle,
+  eventName,
+  id,
+  label,
+  noSelectionLabel,
+  options,
+  placeholder,
+  pluralLabel,
+} = Astro.props as {
+  allOptionId?: string;
+  allOptionLabel: string;
+  allOptionSearch: string;
+  detailKey: string;
+  dialogTitle: string;
+  eventName: string;
+  id: string;
+  label: string;
+  noSelectionLabel: string;
+  options: FilterOption[];
+  placeholder: string;
+  pluralLabel: string;
+};
+---
+
+<div
+  class="filter-picker"
+  data-filter-picker
+  data-all-option-id={allOptionId}
+  data-detail-key={detailKey}
+  data-event-name={eventName}
+  data-no-selection-label={noSelectionLabel}
+  data-plural-label={pluralLabel}
+  data-all-option-label={allOptionLabel}
+>
+  <button
+    class="filter-trigger"
+    type="button"
+    aria-haspopup="dialog"
+    aria-expanded="false"
+    aria-controls={`${id}-options`}
+  >
+    <span>{label}</span>
+  </button>
+  <div id={`${id}-options`} class="filter-options" role="dialog" aria-labelledby={`${id}-options-title`} hidden>
+    <div class="filter-options-header">
+      <h2 id={`${id}-options-title`}>{dialogTitle}</h2>
+      <button class="filter-options-close" type="button" aria-label={`Close ${label.toLowerCase()} filter`}></button>
+    </div>
+    <input
+      id={`${id}-combobox`}
+      type="text"
+      role="combobox"
+      aria-autocomplete="list"
+      aria-expanded="true"
+      aria-controls={`${id}-options-list`}
+      aria-activedescendant=""
+      autocomplete="off"
+      spellcheck="false"
+      placeholder={placeholder}
+    />
+    <div id={`${id}-options-list`} class="filter-options-list" role="listbox" aria-multiselectable="true">
+      <button
+        id={`${id}-option-all`}
+        type="button"
+        role="option"
+        data-filter-option
+        data-option-id={allOptionId}
+        data-option-label={allOptionLabel}
+        data-option-search={allOptionSearch}
+        aria-selected="false"
+      >
+        <span>{allOptionLabel}</span>
+      </button>
+      {
+        options.map((option, index) => (
+          <button
+            id={`${id}-option-${index}`}
+            type="button"
+            role="option"
+            data-filter-option
+            data-option-id={option.id}
+            data-option-label={option.label}
+            data-option-repos={option.repoIds?.join(",")}
+            data-option-search={option.search}
+            aria-selected={option.selected ? "true" : "false"}
+          >
+            <span>{option.label}</span>
+          </button>
+        ))
+      }
+    </div>
+  </div>
+</div>
+
+<script>
+  const fuzzyScore = (value: string, query: string) => {
+    const normalizedQuery = query.toLowerCase();
+    const normalizedValue = value.toLowerCase();
+
+    if (normalizedValue === normalizedQuery) return 0;
+
+    const tokenIndex = normalizedValue.split(/[^a-z0-9]+/).findIndex((token) => token.startsWith(normalizedQuery));
+    if (tokenIndex !== -1) return 5 + tokenIndex;
+
+    const startsAt = normalizedValue.indexOf(normalizedQuery);
+    if (startsAt !== -1) return 10 + startsAt;
+
+    let cursor = 0;
+    let firstMatch = -1;
+    let lastMatch = -1;
+    let gaps = 0;
+
+    for (const character of normalizedQuery) {
+      const matchIndex = normalizedValue.indexOf(character, cursor);
+      if (matchIndex === -1) return Number.POSITIVE_INFINITY;
+      if (lastMatch !== -1) gaps += matchIndex - lastMatch - 1;
+      if (firstMatch === -1) firstMatch = matchIndex;
+      lastMatch = matchIndex;
+      cursor = matchIndex + 1;
+    }
+
+    return 100 + firstMatch * 2 + gaps * 10;
+  };
+
+  for (const picker of document.querySelectorAll<HTMLElement>("[data-filter-picker]")) {
+    const trigger = picker.querySelector<HTMLButtonElement>(".filter-trigger");
+    const input = picker.querySelector<HTMLInputElement>("input");
+    const closeButton = picker.querySelector<HTMLButtonElement>(".filter-options-close");
+    const listbox = picker.querySelector<HTMLElement>(".filter-options");
+    const optionList = picker.querySelector<HTMLElement>(".filter-options-list");
+    const options = [...picker.querySelectorAll<HTMLButtonElement>("[data-filter-option]")];
+    const allOptionId = picker.dataset.allOptionId ?? "__all";
+    const detailKey = picker.dataset.detailKey ?? "selectedIds";
+    const eventName = picker.dataset.eventName ?? "filter:selected";
+    const noSelectionLabel = picker.dataset.noSelectionLabel ?? "No options";
+    const pluralLabel = picker.dataset.pluralLabel ?? "options";
+    const allOptionLabel = picker.dataset.allOptionLabel ?? "All options";
+    const selectableOptions = options.filter((option) => option.dataset.optionId !== allOptionId);
+    const availableSelectableOptions = () =>
+      selectableOptions.filter((option) => option.dataset.optionAvailable !== "false");
+    let visibleOptions = [...options];
+    let activeIndex = visibleOptions.findIndex((option) => option.getAttribute("aria-selected") === "true");
+
+    const getSelectedIds = () => {
+      return availableSelectableOptions()
+        .filter((option) => option.getAttribute("aria-selected") === "true")
+        .map((option) => option.dataset.optionId)
+        .filter((optionId): optionId is string => Boolean(optionId));
+    };
+
+    const formatSelectedOptions = (selectedIds: string[]) => {
+      if (selectedIds.length === 0) return noSelectionLabel;
+      if (selectedIds.length === availableSelectableOptions().length) return allOptionLabel;
+      if (selectedIds.length === 1) {
+        const selected = selectableOptions.find((option) => option.dataset.optionId === selectedIds[0]);
+        return selected?.dataset.optionLabel ?? selectedIds[0] ?? "";
+      }
+
+      return `${selectedIds.length} ${pluralLabel}`;
+    };
+
+    const syncSelectedOptions = () => {
+      if (!trigger) return;
+
+      const selectedIds = getSelectedIds();
+      const allSelected = selectedIds.length > 0 && selectedIds.length === availableSelectableOptions().length;
+      options
+        .find((option) => option.dataset.optionId === allOptionId)
+        ?.setAttribute("aria-selected", String(allSelected));
+      trigger.dataset.selectedOptions = selectedIds.join(",");
+      trigger.setAttribute("aria-label", `${trigger.textContent?.trim() ?? "Filter"}: ${formatSelectedOptions(selectedIds)}`);
+      picker.dispatchEvent(
+        new CustomEvent(eventName, {
+          bubbles: true,
+          detail: { [detailKey]: allSelected ? [allOptionId] : selectedIds },
+        }),
+      );
+    };
+
+    const setOpen = (open: boolean) => {
+      if (!trigger || !input || !listbox) return;
+
+      listbox.hidden = !open;
+      trigger.setAttribute("aria-expanded", String(open));
+      if (!open) {
+        input.setAttribute("aria-activedescendant", "");
+        input.value = "";
+      }
+    };
+
+    const setActive = (index: number) => {
+      if (!input) return;
+
+      activeIndex = index;
+      options.forEach((option) => option.classList.remove("active"));
+      const active = visibleOptions[activeIndex];
+      if (!active) {
+        input.setAttribute("aria-activedescendant", "");
+        return;
+      }
+
+      active.classList.add("active");
+      input.setAttribute("aria-activedescendant", active.id);
+      active.scrollIntoView({ block: "nearest" });
+    };
+
+    const filterOptions = (queryOverride?: string) => {
+      if (!input) return;
+
+      const query = queryOverride ?? input.value.trim();
+      visibleOptions = options
+        .map((option, index) => {
+          const search = option.dataset.optionSearch ?? "";
+          const score = query === "" ? index : fuzzyScore(search, query);
+          return { index, option, score };
+        })
+        .filter(({ option, score }) => {
+          return (option.dataset.optionId === allOptionId || option.dataset.optionAvailable !== "false")
+            && Number.isFinite(score);
+        })
+        .sort((first, second) => first.score - second.score || first.index - second.index)
+        .map(({ option }) => option);
+
+      [...visibleOptions, ...options.filter((option) => !visibleOptions.includes(option))].forEach((option) => {
+        const matches = visibleOptions.includes(option);
+        option.hidden = !matches;
+        optionList?.append(option);
+      });
+
+      setActive(visibleOptions.length > 0 ? 0 : -1);
+    };
+
+    const toggleOption = (option: HTMLButtonElement) => {
+      const selectedId = option.dataset.optionId ?? "";
+      if (selectedId === allOptionId) {
+        const shouldSelectAll = option.getAttribute("aria-selected") !== "true";
+        selectableOptions.forEach((candidate) => {
+          candidate.setAttribute(
+            "aria-selected",
+            String(shouldSelectAll && candidate.dataset.optionAvailable !== "false"),
+          );
+        });
+        syncSelectedOptions();
+        return;
+      }
+
+      option.setAttribute("aria-selected", String(option.getAttribute("aria-selected") !== "true"));
+      syncSelectedOptions();
+    };
+
+    const openMenu = () => {
+      if (!input) return;
+
+      input.value = "";
+      filterOptions("");
+      setOpen(true);
+      input.focus();
+    };
+
+    trigger?.addEventListener("click", () => {
+      if (!listbox) return;
+
+      if (listbox.hidden) {
+        openMenu();
+      } else {
+        setOpen(false);
+      }
+    });
+
+    trigger?.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openMenu();
+      }
+    });
+
+    input?.addEventListener("input", () => {
+      filterOptions();
+      setOpen(true);
+    });
+
+    input?.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        if (listbox?.hidden) {
+          filterOptions("");
+          setOpen(true);
+        }
+        const direction = event.key === "ArrowDown" ? 1 : -1;
+        const nextIndex = visibleOptions.length
+          ? (Math.max(activeIndex, 0) + direction + visibleOptions.length) % visibleOptions.length
+          : -1;
+        setActive(nextIndex);
+      }
+
+      if (event.key === "Enter") {
+        const active = visibleOptions[activeIndex];
+        if (active && !listbox?.hidden) {
+          event.preventDefault();
+          toggleOption(active);
+        }
+      }
+
+      if (event.key === "Escape") {
+        setOpen(false);
+        trigger?.focus();
+      }
+    });
+
+    closeButton?.addEventListener("click", () => {
+      setOpen(false);
+      trigger?.focus();
+    });
+
+    options.forEach((option) => {
+      option.addEventListener("click", () => toggleOption(option));
+    });
+
+    document.addEventListener("pointerdown", (event) => {
+      if (picker.contains(event.target as Node)) return;
+
+      setOpen(false);
+    });
+
+    picker.addEventListener("filter:available-options", (event) => {
+      if (!(event instanceof CustomEvent) || !Array.isArray(event.detail.optionIds)) return;
+
+      const availableIds = new Set(event.detail.optionIds.filter((optionId: unknown) => typeof optionId === "string"));
+      const previouslyAvailableOptions = availableSelectableOptions();
+      const hadAllAvailableSelected = previouslyAvailableOptions.length > 0
+        && previouslyAvailableOptions.every((option) => option.getAttribute("aria-selected") === "true");
+      let selectedAvailableCount = 0;
+      for (const option of selectableOptions) {
+        const optionId = option.dataset.optionId ?? "";
+        const available = availableIds.has(optionId);
+        option.dataset.optionAvailable = available ? "true" : "false";
+        if (!available) {
+          option.setAttribute("aria-selected", "false");
+          continue;
+        }
+        if (option.getAttribute("aria-selected") === "true") {
+          selectedAvailableCount += 1;
+        }
+      }
+
+      if (hadAllAvailableSelected || (event.detail.selectAllIfEmpty === true && selectedAvailableCount === 0)) {
+        availableSelectableOptions().forEach((option) => option.setAttribute("aria-selected", "true"));
+      }
+
+      filterOptions();
+      syncSelectedOptions();
+    });
+
+    syncSelectedOptions();
+  }
+</script>
