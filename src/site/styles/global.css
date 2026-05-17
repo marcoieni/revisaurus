@@ -181,14 +181,6 @@ h1 {
     color: #666052;
 }
 
-.review-assignees {
-    margin-top: 4px;
-}
-
-.review-assignees span:first-child {
-    font-weight: 700;
-}
-
 .sr-only,
 :is(.theme-selector, .diff-overflow-selector, .diff-layout-selector) legend {
     position: absolute;

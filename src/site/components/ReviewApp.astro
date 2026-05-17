@@ -177,26 +177,26 @@ function prReviewStateLabel(review: PullRequestReview): string {
                           ) : (
                             review.pullRequest.author
                           )} · {review.reviewedCommit.slice(0, 8)}
-                        </p>
-                        {assignees.length > 0 && (
-                          <p class="review-assignees">
-                            <span>Assigned to</span>{" "}
-                            {assignees.map((assignee, index) => {
-                              const assigneeUrl = getUserUrl(review, assignee);
+                          {assignees.length > 0 && (
+                            <>
+                              {" "}· assigned to{" "}
+                              {assignees.map((assignee, index) => {
+                                const assigneeUrl = getUserUrl(review, assignee);
 
-                              return (
-                                <>
-                                  {index > 0 && <span>, </span>}
-                                  {assigneeUrl ? (
-                                    <a class="review-assignee" href={assigneeUrl}>{assignee}</a>
-                                  ) : (
-                                    <span>{assignee}</span>
-                                  )}
-                                </>
-                              );
-                            })}
-                          </p>
-                        )}
+                                return (
+                                  <>
+                                    {index > 0 && <span>, </span>}
+                                    {assigneeUrl ? (
+                                      <a class="review-assignee" href={assigneeUrl}>{assignee}</a>
+                                    ) : (
+                                      <span>{assignee}</span>
+                                    )}
+                                  </>
+                                );
+                              })}
+                            </>
+                          )}
+                        </p>
                       </div>
                     </div>
                     <div class="review-meta">
