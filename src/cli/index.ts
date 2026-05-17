@@ -10,6 +10,8 @@ import { reviewerFor } from "../reviewers/index.js";
 import { emptyState, isReusableReview, loadState, reviewKey, saveState } from "../state/reviewState.js";
 import type { PullRequestReview, RepositoryConfig, RevisaurConfig } from "../types/revisaur.js";
 
+type SiteRepository = Pick<RepositoryConfig, "id" | "name" | "owner" | "provider" | "repo" | "url">;
+
 const program = new Command();
 const dataDirEnvKey = "REVISAUR_DATA_DIR";
 const logIcon = {
@@ -140,23 +142,10 @@ async function generate(config: RevisaurConfig, skipBuild: boolean, workspace: s
         }
     }
 
-    await writeJson(
-        path.join(dataDir, "site.json"),
-        {
-            generatedAt: new Date().toISOString(),
-            repositories: config.repositories.map(({ id, name, provider, url, owner, repo }) => ({
-                id,
-                name,
-                provider,
-                url,
-                owner,
-                repo,
-            })),
-            reviews: reviewKeys
-                .map((key) => state.reviews[key])
-                .filter((review): review is PullRequestReview => Boolean(review)),
-        },
-        { spaces: 2 },
+    await writeSiteData(
+        dataDir,
+        config.repositories,
+        reviewKeys.map((key) => state.reviews[key]).filter((review): review is PullRequestReview => Boolean(review)),
     );
 
     await saveState(statePath, state);
@@ -187,22 +176,7 @@ async function demo(
         state.reviews[reviewKey(review.pullRequest)] = review;
     }
 
-    await writeJson(
-        path.join(dataDir, "site.json"),
-        {
-            generatedAt: new Date().toISOString(),
-            repositories: repositories.map(({ id, name, provider, url, owner, repo }) => ({
-                id,
-                name,
-                provider,
-                url,
-                owner,
-                repo,
-            })),
-            reviews,
-        },
-        { spaces: 2 },
-    );
+    await writeSiteData(dataDir, repositories, reviews);
     await saveState(path.join(dataDir, "state.json"), state);
 
     if (!skipBuild) {
@@ -222,6 +196,26 @@ async function buildSite(dataDir: string, outputDir: string, workspace: string):
             [workspaceEnvKey]: workspace,
         },
     });
+}
+
+async function writeSiteData(
+    dataDir: string,
+    repositories: SiteRepository[],
+    reviews: PullRequestReview[],
+): Promise<void> {
+    await writeJson(
+        path.join(dataDir, "site.json"),
+        {
+            generatedAt: new Date().toISOString(),
+            repositories: repositories.map(siteRepository),
+            reviews,
+        },
+        { spaces: 2 },
+    );
+}
+
+function siteRepository({ id, name, provider, url, owner, repo }: SiteRepository): SiteRepository {
+    return { id, name, provider, url, owner, repo };
 }
 
 function resolvePackageRoot(): string {

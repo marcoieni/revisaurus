@@ -4,6 +4,18 @@ import type { ReviewComment, ReviewerConfig } from "../types/revisaur.js";
 import { stripControlCharacters } from "../utils/sanitizeText.js";
 
 const reviewSeverities = new Set<ReviewComment["severity"]>(["critical", "note", "suggestion", "warning"]);
+const reviewJsonShape = `{
+  "summary": "short markdown summary",
+  "comments": [
+    {
+      "path": "file path from the diff",
+      "line": 123,
+      "side": "right",
+      "severity": "critical|warning|suggestion|note",
+      "body": "comment body"
+    }
+  ]
+}`;
 
 export class KiroReviewer implements Reviewer {
     constructor(private readonly config: ReviewerConfig) {}
@@ -62,18 +74,7 @@ Head commit: ${request.pullRequest.headSha}
 ${additionalInstructions}
 
 Return only valid JSON with this exact shape and no surrounding text:
-{
-  "summary": "short markdown summary",
-  "comments": [
-    {
-      "path": "file path from the diff",
-      "line": 123,
-      "side": "right",
-      "severity": "critical|warning|suggestion|note",
-      "body": "comment body"
-    }
-  ]
-}
+${reviewJsonShape}
 
 Use "right" for added/new lines and "left" for removed/old lines. Tie all comments to specific diff lines.
 Summaries and comment bodies may contain markdown. Use escaped JSON newlines ("\\n") when they improve readability.
@@ -92,18 +93,7 @@ Pull request: #${request.pullRequest.number.toString()} ${request.pullRequest.ti
 Head commit: ${request.pullRequest.headSha}
 
 Return only JSON with this exact shape and no surrounding markdown, prose, or code fences:
-{
-  "summary": "short markdown summary",
-  "comments": [
-    {
-      "path": "file path from the diff",
-      "line": 123,
-      "side": "right",
-      "severity": "critical|warning|suggestion|note",
-      "body": "comment body"
-    }
-  ]
-}
+${reviewJsonShape}
 
 Rules:
 - Preserve any specific findings from the previous output.

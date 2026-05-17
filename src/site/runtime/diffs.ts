@@ -45,39 +45,25 @@ document.addEventListener("diff-overflow:selected", (event) => {
     const selectedOverflow = getCustomEventValue(event, "overflow");
     const overflow = isDiffOverflow(selectedOverflow) ? selectedOverflow : getCurrentOverflow();
     currentOverflow = overflow;
-    for (const diff of diffs) {
-        const renderState = diffRenderState.get(diff);
-        if (!renderState) {
-            continue;
-        }
-        diff.setOptions({ ...diff.options, overflow });
-        diff.render({
-            fileDiff: renderState.fileDiff,
-            fileContainer: renderState.container,
-            forceRender: true,
-            lineAnnotations: renderState.lineAnnotations,
-        });
-    }
+    updateRenderedDiffOptions({ overflow });
 });
 
 document.addEventListener("diff-layout:selected", (event) => {
     const selectedLayout = getCustomEventValue(event, "layout");
     const diffStyle = isDiffLayout(selectedLayout) ? getDiffStyleForLayout(selectedLayout) : getCurrentDiffStyle();
     currentDiffStyle = diffStyle;
-    for (const diff of diffs) {
-        const renderState = diffRenderState.get(diff);
-        if (!renderState) {
-            continue;
-        }
-        diff.setOptions({ ...diff.options, diffStyle });
-        diff.render({
-            fileDiff: renderState.fileDiff,
-            fileContainer: renderState.container,
-            forceRender: true,
-            lineAnnotations: renderState.lineAnnotations,
-        });
-    }
+    updateRenderedDiffOptions({ diffStyle });
 });
+
+function updateRenderedDiffOptions(options: {
+    diffStyle?: NonNullable<BaseDiffOptions["diffStyle"]>;
+    overflow?: NonNullable<BaseDiffOptions["overflow"]>;
+}): void {
+    for (const diff of diffs) {
+        diff.setOptions({ ...diff.options, ...options });
+        rerenderDiff(diff);
+    }
+}
 
 for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
     const patch = decodeURIComponent(container.dataset.patch ?? "");
@@ -118,8 +104,6 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
                     return createCollapseButton({
                         container: element,
                         diff,
-                        fileDiff,
-                        lineAnnotations,
                     });
                 },
                 renderAnnotation(annotation) {
@@ -240,13 +224,9 @@ function setCopyButtonState(button: HTMLButtonElement, status: string): void {
 function createCollapseButton({
     container,
     diff,
-    fileDiff,
-    lineAnnotations,
 }: {
     container: HTMLElement;
     diff: FileDiff<ReviewAnnotation>;
-    fileDiff: FileDiffMetadata;
-    lineAnnotations: DiffLineAnnotation<ReviewAnnotation>[];
 }): HTMLButtonElement {
     const button = document.createElement("button");
     button.className = "diff-collapse-toggle";
@@ -259,15 +239,24 @@ function createCollapseButton({
         container.toggleAttribute("data-collapsed", collapsed);
         updateCollapseButtonState(button, collapsed);
         diff.setOptions({ ...diff.options, collapsed });
-        diff.render({
-            fileDiff,
-            fileContainer: container,
-            forceRender: true,
-            lineAnnotations,
-        });
+        rerenderDiff(diff);
     });
 
     return button;
+}
+
+function rerenderDiff(diff: FileDiff<ReviewAnnotation>): void {
+    const renderState = diffRenderState.get(diff);
+    if (!renderState) {
+        return;
+    }
+
+    diff.render({
+        fileDiff: renderState.fileDiff,
+        fileContainer: renderState.container,
+        forceRender: true,
+        lineAnnotations: renderState.lineAnnotations,
+    });
 }
 
 function updateCollapseButtonState(button: HTMLButtonElement, collapsed: boolean): void {

@@ -11,33 +11,8 @@ const { data } = Astro.props;
 const repositories = data.repositories as Array<Pick<RepositoryConfig, "id" | "name" | "provider" | "url" | "owner" | "repo">>;
 const reviews = data.reviews as PullRequestReview[];
 const initialRepo = data.repositories[0]?.id ?? "";
-const authors = [
-  ...reviews
-    .reduce((authorsByName, review) => {
-      const repoIds = authorsByName.get(review.pullRequest.author) ?? new Set<string>();
-      repoIds.add(review.repoId);
-      authorsByName.set(review.pullRequest.author, repoIds);
-      return authorsByName;
-    }, new Map<string, Set<string>>())
-    .entries(),
-]
-  .map(([author, repoIds]) => ({ author, repoIds: [...repoIds] }))
-  .sort((first, second) => first.author.localeCompare(second.author));
-const assignees = [
-  ...reviews
-    .reduce((assigneesByName, review) => {
-      for (const assignee of review.pullRequest.assignees ?? []) {
-        const repoIds = assigneesByName.get(assignee) ?? new Set<string>();
-        repoIds.add(review.repoId);
-        assigneesByName.set(assignee, repoIds);
-      }
-
-      return assigneesByName;
-    }, new Map<string, Set<string>>())
-    .entries(),
-]
-  .map(([assignee, repoIds]) => ({ assignee, repoIds: [...repoIds] }))
-  .sort((first, second) => first.assignee.localeCompare(second.assignee));
+const authors = userFilterOptions(reviews, (review) => [review.pullRequest.author]);
+const assignees = userFilterOptions(reviews, (review) => review.pullRequest.assignees ?? []);
 const projectUrl = "https://github.com/marcoieni/revisaur";
 const logoUrl = publicAssetPath("logo.png");
 const iconStyle = [
@@ -58,6 +33,22 @@ function getUserUrl(review: PullRequestReview, user: string): string | undefined
   }
 
   return `https://github.com/${encodeURIComponent(user)}`;
+}
+
+function userFilterOptions(reviews: PullRequestReview[], usersForReview: (review: PullRequestReview) => string[]) {
+  const repoIdsByUser = new Map<string, Set<string>>();
+
+  for (const review of reviews) {
+    for (const user of usersForReview(review)) {
+      const repoIds = repoIdsByUser.get(user) ?? new Set<string>();
+      repoIds.add(review.repoId);
+      repoIdsByUser.set(user, repoIds);
+    }
+  }
+
+  return [...repoIdsByUser.entries()]
+    .map(([user, repoIds]) => ({ user, repoIds: [...repoIds] }))
+    .sort((first, second) => first.user.localeCompare(second.user));
 }
 
 function prReviewStateLabel(review: PullRequestReview): string {
@@ -136,11 +127,11 @@ function prReviewStateLabel(review: PullRequestReview): string {
           eventName="author:selected"
           noSelectionLabel="No authors"
           pluralLabel="authors"
-          options={authors.map(({ author, repoIds }) => ({
-            id: author,
-            label: author,
+          options={authors.map(({ user, repoIds }) => ({
+            id: user,
+            label: user,
             repoIds,
-            search: author,
+            search: user,
             selected: true,
           }))}
         />
@@ -155,11 +146,11 @@ function prReviewStateLabel(review: PullRequestReview): string {
           eventName="assignee:selected"
           noSelectionLabel="No assignees"
           pluralLabel="assignees"
-          options={assignees.map(({ assignee, repoIds }) => ({
-            id: assignee,
-            label: assignee,
+          options={assignees.map(({ user, repoIds }) => ({
+            id: user,
+            label: user,
             repoIds,
-            search: assignee,
+            search: user,
             selected: true,
           }))}
         />
