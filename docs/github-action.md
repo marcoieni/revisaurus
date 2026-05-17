@@ -57,4 +57,6 @@ jobs:
 
 The build job is the only job that runs the AI reviewer, so it gets read-only repository permissions and the Kiro API key. The deploy job gets the Pages/OIDC permissions, but it only publishes the generated artifact and does not run the reviewer.
 
+By default the action caches `.revisaur/data`, matching the default `data_dir`. If your `revisaur.toml` uses a different `data_dir`, pass the same path as `cache-path` to the action.
+
 For now the provider implementation supports GitHub repository URLs. The config keeps an explicit `provider` field so GitLab and Forgejo providers can be added without changing the file shape.
