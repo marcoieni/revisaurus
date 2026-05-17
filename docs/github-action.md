@@ -20,11 +20,7 @@ on:
   schedule:
     - cron: "17 * * * *"
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-  pull-requests: read
+permissions: {}
 
 concurrency:
   group: pages
@@ -33,6 +29,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@v6
       - uses: marcoieni/revisaur/action@main
@@ -45,6 +44,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -52,5 +54,7 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v5
 ```
+
+The build job is the only job that runs the AI reviewer, so it gets read-only repository permissions and the Kiro API key. The deploy job gets the Pages/OIDC permissions, but it only publishes the generated artifact and does not run the reviewer.
 
 For now the provider implementation supports GitHub repository URLs. The config keeps an explicit `provider` field so GitLab and Forgejo providers can be added without changing the file shape.

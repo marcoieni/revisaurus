@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { execa } from "execa";
 import { KiroReviewer } from "./kiro.js";
 import type { ReviewerConfig } from "../types/revisaur.js";
@@ -32,6 +32,8 @@ const request = {
     },
     diff: "diff --git a/widget.ts b/widget.ts",
 };
+const restoredEnvKeys = ["GITHUB_TOKEN", "HOME", "KIRO_API_KEY", "PATH", "UNRELATED_SECRET"] as const;
+const originalEnv = Object.fromEntries(restoredEnvKeys.map((key) => [key, process.env[key]]));
 
 function config(overrides: Partial<ReviewerConfig> = {}): ReviewerConfig {
     return {
@@ -46,6 +48,17 @@ function config(overrides: Partial<ReviewerConfig> = {}): ReviewerConfig {
 describe("KiroReviewer", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+    });
+
+    afterEach(() => {
+        for (const key of restoredEnvKeys) {
+            const value = originalEnv[key];
+            if (value === undefined) {
+                Reflect.deleteProperty(process.env, key);
+            } else {
+                process.env[key] = value;
+            }
+        }
     });
 
     it("runs Kiro without a model flag by default", async () => {
@@ -70,6 +83,27 @@ describe("KiroReviewer", () => {
             "kiro-cli",
             expect.arrayContaining(["--model", "claude-sonnet-4.5"]),
             expect.objectContaining({ timeout: 900_000 }),
+        );
+    });
+
+    it("passes only the environment Kiro needs", async () => {
+        process.env.GITHUB_TOKEN = "github-token";
+        process.env.HOME = "/home/revisaur";
+        process.env.KIRO_API_KEY = "kiro-api-key";
+        process.env.PATH = "/usr/bin";
+        process.env.UNRELATED_SECRET = "another-secret";
+
+        await new KiroReviewer(config()).review(request);
+
+        const expectedEnv = Object.fromEntries([
+            ["HOME", "/home/revisaur"],
+            ["KIRO_API_KEY", "kiro-api-key"],
+            ["PATH", "/usr/bin"],
+        ]);
+        expect(execa).toHaveBeenCalledWith(
+            "kiro-cli",
+            expect.any(Array),
+            expect.objectContaining({ env: expectedEnv }),
         );
     });
 
