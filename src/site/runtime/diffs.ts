@@ -93,7 +93,7 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
                         body: comment.body,
                     },
                 }));
-            const collapsed = lineAnnotations.length === 0;
+            const collapsed = shouldCollapseFile(lineAnnotations);
             element.toggleAttribute("data-collapsed", collapsed);
 
             const diff = new FileDiff<ReviewAnnotation>({
@@ -127,6 +127,9 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
                         addressedState = { ...addressedState, [comment.addressedKey]: addressedToggle.checked };
                         saveAddressedState();
                         node.toggleAttribute("data-addressed", addressedToggle.checked);
+                        if (addressedToggle.checked && shouldCollapseFile(lineAnnotations)) {
+                            setDiffCollapsed(diff, true);
+                        }
                     });
                     const button = node.querySelector<HTMLButtonElement>(".copy-location-button");
                     button?.addEventListener("click", () => {
@@ -293,13 +296,32 @@ function createCollapseButton({
 
     button.addEventListener("click", () => {
         const collapsed = !container.hasAttribute("data-collapsed");
-        container.toggleAttribute("data-collapsed", collapsed);
-        updateCollapseButtonState(button, collapsed);
-        diff.setOptions({ ...diff.options, collapsed });
-        rerenderDiff(diff);
+        setDiffCollapsed(diff, collapsed);
     });
 
     return button;
+}
+
+function shouldCollapseFile(lineAnnotations: DiffLineAnnotation<ReviewAnnotation>[]): boolean {
+    return (
+        lineAnnotations.length === 0 ||
+        lineAnnotations.every((annotation) => addressedState[annotation.metadata.addressedKey] ?? false)
+    );
+}
+
+function setDiffCollapsed(diff: FileDiff<ReviewAnnotation>, collapsed: boolean): void {
+    const renderState = diffRenderState.get(diff);
+    if (!renderState) {
+        return;
+    }
+
+    renderState.container.toggleAttribute("data-collapsed", collapsed);
+    const button = renderState.container.querySelector<HTMLButtonElement>(".diff-collapse-toggle");
+    if (button) {
+        updateCollapseButtonState(button, collapsed);
+    }
+    diff.setOptions({ ...diff.options, collapsed });
+    rerenderDiff(diff);
 }
 
 function rerenderDiff(diff: FileDiff<ReviewAnnotation>): void {
