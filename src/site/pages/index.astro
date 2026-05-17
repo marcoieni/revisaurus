@@ -2,6 +2,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import ReviewApp from "../components/ReviewApp.astro";
+import { publicAssetPath } from "../runtime/assets";
 import "../styles/global.css";
 
 const dataDir = import.meta.env.REVISAUR_DATA_DIR ?? ".revisaur/data";
@@ -14,6 +15,12 @@ const siteData = JSON.parse(await readFile(siteDataPath, "utf8"));
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="64x64"
+      href={publicAssetPath("favicon.png")}
+    />
     <title>Revisaur</title>
   </head>
   <body>
