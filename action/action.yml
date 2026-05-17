@@ -38,6 +38,8 @@ runs:
     - name: Generate Revisaur site
       shell: bash
       env:
+        # The generator needs this for GitHub API reads; reviewer subprocesses
+        # receive a smaller allowlist instead of inheriting the full job env.
         GITHUB_TOKEN: ${{ github.token }}
         KIRO_API_KEY: ${{ env.KIRO_API_KEY }}
         INPUTS_CONFIG: ${{ inputs.config }}
