@@ -28,6 +28,7 @@
         "dev": "astro dev",
         "format": "prettier --write .",
         "generate": "tsx src/cli/index.ts generate",
+        "lint": "eslint .",
         "prepack": "pnpm run build",
         "site:build": "astro build",
         "test": "vitest run"
@@ -48,12 +49,17 @@
     },
     "devDependencies": {
         "@astrojs/check": "^0.9.9",
+        "@eslint/js": "^10.0.1",
         "@types/fs-extra": "^11.0.4",
         "@types/node": "^25.0.0",
         "astro": "^6.3.1",
+        "eslint": "^10.4.0",
+        "eslint-plugin-astro": "^1.7.0",
+        "globals": "^17.6.0",
         "prettier": "^3.8.3",
         "tsx": "^4.21.0",
         "typescript": "^6.0.3",
+        "typescript-eslint": "^8.59.3",
         "vitest": "^4.1.6"
     }
 }
