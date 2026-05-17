@@ -1,7 +1,7 @@
-export type ProviderKind = "github" | "gitlab" | "forgejo";
+export type ProviderKind = "forgejo" | "github" | "gitlab";
 
-export type ReviewStatus = "reviewed" | "skipped" | "failed";
-export type PullRequestReviewState = "draft" | "ready" | "approved";
+export type ReviewStatus = "failed" | "reviewed" | "skipped";
+export type PullRequestReviewState = "approved" | "draft" | "ready";
 
 export interface RevisaurConfig {
     outputDir: string;
@@ -14,7 +14,7 @@ export interface RevisaurConfig {
 }
 
 export interface ReviewerConfig {
-    kind: "kiro" | "codex";
+    kind: "codex" | "kiro";
     command: string;
     model?: string;
     trustTools: string;
@@ -53,7 +53,7 @@ export interface ReviewComment {
     path: string;
     line: number;
     side: "left" | "right";
-    severity: "critical" | "warning" | "suggestion" | "note";
+    severity: "critical" | "note" | "suggestion" | "warning";
     body: string;
 }
 

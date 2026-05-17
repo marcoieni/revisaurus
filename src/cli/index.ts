@@ -11,6 +11,7 @@ import { emptyState, isReusableReview, loadState, reviewKey, saveState } from ".
 import type { PullRequestReview, RepositoryConfig, RevisaurConfig } from "../types/revisaur.js";
 
 const program = new Command();
+const dataDirEnvKey = "REVISAUR_DATA_DIR";
 const logIcon = {
     cache: "💾",
     complete: "✅",
@@ -19,6 +20,8 @@ const logIcon = {
     review: "🔍",
     search: "📋",
 };
+const outputDirEnvKey = "REVISAUR_OUTPUT_DIR";
+const workspaceEnvKey = "REVISAUR_WORKSPACE";
 
 program
     .name("revisaur")
@@ -63,17 +66,17 @@ async function generate(config: RevisaurConfig, skipBuild: boolean, workspace: s
     let failedReviews = 0;
 
     console.log(
-        `${logIcon.cache} Loaded review cache from ${statePath} with ${Object.keys(state.reviews).length} entries.`,
+        `${logIcon.cache} Loaded review cache from ${statePath} with ${Object.keys(state.reviews).length.toString()} entries.`,
     );
 
     for (const repo of config.repositories) {
         const provider = providerFor(repo);
         const pullRequests = await provider.listRecentlyUpdatedPullRequests(repo);
-        console.log(`${logIcon.search} Found ${pullRequests.length} pull requests for ${repo.name}.`);
+        console.log(`${logIcon.search} Found ${pullRequests.length.toString()} pull requests for ${repo.name}.`);
 
         for (const pullRequest of pullRequests) {
             const key = reviewKey(pullRequest);
-            const label = `${repo.name} PR #${pullRequest.number}`;
+            const label = `${repo.name} PR #${pullRequest.number.toString()}`;
             reviewKeys.push(key);
 
             if (isReusableReview(state.reviews[key])) {
@@ -113,7 +116,7 @@ async function generate(config: RevisaurConfig, skipBuild: boolean, workspace: s
                 state.reviews[key] = review;
                 completedReviews += 1;
                 console.log(
-                    `${logIcon.complete} Review completed for ${label} with ${result.comments.length} comments.`,
+                    `${logIcon.complete} Review completed for ${label} with ${result.comments.length.toString()} comments.`,
                 );
             } catch (error) {
                 const review: PullRequestReview = {
@@ -130,7 +133,7 @@ async function generate(config: RevisaurConfig, skipBuild: boolean, workspace: s
                 };
                 state.reviews[key] = review;
                 failedReviews += 1;
-                console.log(`${logIcon.error} Review failed for ${label}: ${review.error}`);
+                console.log(`${logIcon.error} Review failed for ${label}: ${review.error ?? "Unknown error"}`);
             }
 
             await saveState(statePath, state);
@@ -158,7 +161,7 @@ async function generate(config: RevisaurConfig, skipBuild: boolean, workspace: s
 
     await saveState(statePath, state);
     console.log(
-        `${logIcon.complete} Review run complete: ${cachedReviews} cached, ${completedReviews} reviewed, ${failedReviews} failed.`,
+        `${logIcon.complete} Review run complete: ${cachedReviews.toString()} cached, ${completedReviews.toString()} reviewed, ${failedReviews.toString()} failed.`,
     );
 
     if (!skipBuild) {
@@ -214,9 +217,9 @@ async function buildSite(dataDir: string, outputDir: string, workspace: string):
         cwd: packageRoot,
         env: {
             ...process.env,
-            REVISAUR_DATA_DIR: dataDir,
-            REVISAUR_OUTPUT_DIR: outputDir,
-            REVISAUR_WORKSPACE: workspace,
+            [dataDirEnvKey]: dataDir,
+            [outputDirEnvKey]: outputDir,
+            [workspaceEnvKey]: workspace,
         },
     });
 }

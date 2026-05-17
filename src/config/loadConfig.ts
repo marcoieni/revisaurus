@@ -3,30 +3,38 @@ import { parse } from "smol-toml";
 import { z } from "zod";
 import type { RepositoryConfig, RevisaurConfig } from "../types/revisaur.js";
 
+const dataDirKey = "data_dir";
+const maxPullRequestsKey = "max_pull_requests";
+const outputDirKey = "output_dir";
+const promptInstructionsKey = "prompt_instructions";
+const skippedAuthorsKey = "skipped_authors";
+const timeoutSecondsKey = "timeout_seconds";
+const trustToolsKey = "trust_tools";
+
 const repositorySchema = z.object({
     id: z.string().optional(),
     name: z.string().optional(),
     provider: z.enum(["github", "gitlab", "forgejo"]).default("github"),
     url: z.url(),
-    max_pull_requests: z.number().int().positive().optional(),
-    skipped_authors: z.array(z.string()).optional(),
-    prompt_instructions: z.string().trim().min(1).optional(),
+    [maxPullRequestsKey]: z.number().int().positive().optional(),
+    [skippedAuthorsKey]: z.array(z.string()).optional(),
+    [promptInstructionsKey]: z.string().trim().min(1).optional(),
     branch: z.string().optional(),
 });
 
 const configSchema = z.object({
-    output_dir: z.string().default("site-dist"),
-    data_dir: z.string().default(".revisaur/data"),
-    max_pull_requests: z.number().int().positive().default(10),
-    skipped_authors: z.array(z.string()).default(["renovate", "renovate[bot]", "dependabot", "dependabot[bot]"]),
-    prompt_instructions: z.string().trim().min(1).optional(),
+    [outputDirKey]: z.string().default("site-dist"),
+    [dataDirKey]: z.string().default(".revisaur/data"),
+    [maxPullRequestsKey]: z.number().int().positive().default(10),
+    [skippedAuthorsKey]: z.array(z.string()).default(["renovate", "renovate[bot]", "dependabot", "dependabot[bot]"]),
+    [promptInstructionsKey]: z.string().trim().min(1).optional(),
     reviewer: z
         .object({
             kind: z.enum(["kiro", "codex"]).default("kiro"),
             command: z.string().default("kiro-cli"),
             model: z.string().trim().min(1).optional(),
-            trust_tools: z.string().default("read,grep"),
-            timeout_seconds: z.number().int().positive().default(900),
+            [trustToolsKey]: z.string().default("read,grep"),
+            [timeoutSecondsKey]: z.number().int().positive().default(900),
         })
         .prefault({}),
     repositories: z.array(repositorySchema).min(1),

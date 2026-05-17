@@ -22,7 +22,7 @@ describe("reviewState", () => {
         const state: ReviewState = {
             version: 1,
             reviews: {
-                "github:repo:7:abc": {
+                [reviewKey(pullRequest())]: {
                     repoId: "repo",
                     pullRequest: pullRequest(),
                     status: "reviewed",

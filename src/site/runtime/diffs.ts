@@ -24,18 +24,16 @@ let currentDiffStyle = getCurrentDiffStyle();
 const copyFileNameLabel = "Copy file name to clipboard";
 
 document.addEventListener("theme:selected", (event) => {
-    const theme =
-        event instanceof CustomEvent && isThemeType(event.detail?.theme) ? event.detail.theme : getCurrentTheme();
+    const selectedTheme = getCustomEventValue(event, "theme");
+    const theme = isThemeType(selectedTheme) ? selectedTheme : getCurrentTheme();
     for (const diff of diffs) {
         diff.setThemeType(theme);
     }
 });
 
 document.addEventListener("diff-overflow:selected", (event) => {
-    const overflow =
-        event instanceof CustomEvent && isDiffOverflow(event.detail?.overflow)
-            ? event.detail.overflow
-            : getCurrentOverflow();
+    const selectedOverflow = getCustomEventValue(event, "overflow");
+    const overflow = isDiffOverflow(selectedOverflow) ? selectedOverflow : getCurrentOverflow();
     currentOverflow = overflow;
     for (const diff of diffs) {
         const renderState = diffRenderState.get(diff);
@@ -53,10 +51,8 @@ document.addEventListener("diff-overflow:selected", (event) => {
 });
 
 document.addEventListener("diff-layout:selected", (event) => {
-    const diffStyle =
-        event instanceof CustomEvent && isDiffLayout(event.detail?.layout)
-            ? getDiffStyleForLayout(event.detail.layout)
-            : getCurrentDiffStyle();
+    const selectedLayout = getCustomEventValue(event, "layout");
+    const diffStyle = isDiffLayout(selectedLayout) ? getDiffStyleForLayout(selectedLayout) : getCurrentDiffStyle();
     currentDiffStyle = diffStyle;
     for (const diff of diffs) {
         const renderState = diffRenderState.get(diff);
@@ -75,13 +71,7 @@ document.addEventListener("diff-layout:selected", (event) => {
 
 for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
     const patch = decodeURIComponent(container.dataset.patch ?? "");
-    const comments = JSON.parse(decodeURIComponent(container.dataset.comments ?? "[]")) as Array<{
-        path: string;
-        line: number;
-        side: "left" | "right";
-        severity: string;
-        body: string;
-    }>;
+    const comments = parseReviewComments(decodeURIComponent(container.dataset.comments ?? "[]"));
 
     const parsed = parsePatchFiles(patch);
     const fragment = document.createDocumentFragment();
@@ -124,7 +114,7 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
                 },
                 renderAnnotation(annotation) {
                     const comment = annotation.metadata;
-                    const location = `${comment.path}:${comment.line}`;
+                    const location = `${comment.path}:${comment.line.toString()}`;
                     const node = document.createElement("div");
                     node.className = `review-comment ${comment.severity}`;
                     node.style.color = "#171717";
@@ -201,39 +191,14 @@ function escapeAttribute(value: string): string {
 
 async function copyLocation(button: HTMLButtonElement, location: string): Promise<void> {
     try {
-        if (navigator.clipboard) {
+        if ("clipboard" in navigator) {
             await navigator.clipboard.writeText(location);
-        } else if (!copyLocationFallback(location)) {
+        } else {
             throw new Error("Clipboard unavailable");
         }
         setCopyButtonState(button, "Copied!");
     } catch {
-        if (copyLocationFallback(location)) {
-            setCopyButtonState(button, "Copied!");
-        } else {
-            setCopyButtonState(button, "Copy failed");
-        }
-    }
-}
-
-function copyLocationFallback(location: string): boolean {
-    const field = document.createElement("textarea");
-    field.value = location;
-    field.setAttribute("readonly", "");
-    field.style.opacity = "0";
-    field.style.position = "fixed";
-    field.style.top = "-1px";
-    field.style.left = "-1px";
-    document.body.append(field);
-    field.focus();
-    field.select();
-    field.setSelectionRange(0, field.value.length);
-
-    try {
-        const copyCommand = (document as unknown as { execCommand(commandId: string): boolean }).execCommand;
-        return copyCommand.call(document, "copy");
-    } finally {
-        field.remove();
+        setCopyButtonState(button, "Copy failed");
     }
 }
 
@@ -295,4 +260,43 @@ interface ReviewAnnotation {
     line: number;
     severity: string;
     body: string;
+}
+
+interface ReviewCommentData extends ReviewAnnotation {
+    side: "left" | "right";
+}
+
+function getCustomEventValue(event: Event, key: string): unknown {
+    if (!(event instanceof CustomEvent) || !isRecord(event.detail)) {
+        return undefined;
+    }
+
+    return event.detail[key];
+}
+
+function parseReviewComments(value: string): ReviewCommentData[] {
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) {
+        return [];
+    }
+
+    return parsed.filter(isReviewCommentData);
+}
+
+function isReviewCommentData(value: unknown): value is ReviewCommentData {
+    if (!isRecord(value)) {
+        return false;
+    }
+
+    return (
+        typeof value.path === "string" &&
+        typeof value.line === "number" &&
+        (value.side === "left" || value.side === "right") &&
+        typeof value.severity === "string" &&
+        typeof value.body === "string"
+    );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null;
 }
