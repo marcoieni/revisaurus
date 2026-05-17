@@ -21,13 +21,16 @@ export class GitHubProvider implements RepositoryProvider {
 
         const skipped = new Set(repo.skippedAuthors.map((author) => author.toLowerCase()));
 
-        return response.data
+        const pullRequests = response.data
             .filter((pr) => !skipped.has((pr.user?.login ?? "").toLowerCase()))
-            .slice(0, repo.maxPullRequests)
-            .map((pr) => ({
+            .slice(0, repo.maxPullRequests);
+
+        return Promise.all(
+            pullRequests.map(async (pr) => ({
                 provider: "github",
                 repoId: repo.id,
                 number: pr.number,
+                reviewState: pr.draft ? "draft" : await this.#reviewState(repo, pr.number),
                 title: pr.title,
                 url: pr.html_url,
                 author: pr.user?.login ?? "unknown",
@@ -35,7 +38,8 @@ export class GitHubProvider implements RepositoryProvider {
                 baseSha: pr.base.sha,
                 updatedAt: pr.updated_at,
                 mergedAt: pr.merged_at,
-            }));
+            })),
+        );
     }
 
     async getPullRequestDiff(repo: RepositoryConfig, pullRequestNumber: number): Promise<string> {
@@ -47,5 +51,38 @@ export class GitHubProvider implements RepositoryProvider {
         });
 
         return response.data as unknown as string;
+    }
+
+    async #reviewState(repo: RepositoryConfig, pullRequestNumber: number): Promise<"ready" | "approved"> {
+        const response = await this.#client.rest.pulls.listReviews({
+            owner: repo.owner,
+            repo: repo.repo,
+            pull_number: pullRequestNumber,
+            per_page: 100,
+        });
+
+        const latestReviewByUser = new Map<string, { state: string; submittedAt: string }>();
+
+        for (const review of response.data) {
+            const user = review.user?.login;
+            const submittedAt = review.submitted_at;
+
+            if (!user || !submittedAt) {
+                continue;
+            }
+
+            const latestReview = latestReviewByUser.get(user);
+            if (!latestReview || submittedAt > latestReview.submittedAt) {
+                latestReviewByUser.set(user, { state: review.state, submittedAt });
+            }
+        }
+
+        const latestStates = [...latestReviewByUser.values()].map((review) => review.state);
+
+        if (latestStates.includes("CHANGES_REQUESTED")) {
+            return "ready";
+        }
+
+        return latestStates.includes("APPROVED") ? "approved" : "ready";
     }
 }
