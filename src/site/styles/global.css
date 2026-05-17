@@ -678,7 +678,57 @@ h1 {
 .summary {
     padding: 16px 18px;
     line-height: 1.55;
+}
+
+.markdown-source {
+    margin: 0;
+    overflow-x: auto;
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font:
+        0.94rem/1.55 ui-monospace,
+        SFMono-Regular,
+        "SF Mono",
+        Menlo,
+        Consolas,
+        "Liberation Mono",
+        monospace;
+}
+
+.markdown-source code {
+    display: block;
+    min-width: 0;
+}
+
+.hljs-section,
+.hljs-strong {
+    color: #7c2d12;
+    font-weight: 700;
+}
+
+.hljs-emphasis {
+    color: #075e54;
+    font-style: italic;
+}
+
+.hljs-code,
+.hljs-quote {
+    color: #6d28d9;
+}
+
+.hljs-bullet,
+.hljs-symbol,
+.hljs-link {
+    color: #b45309;
+}
+
+.hljs-string,
+.hljs-title {
+    color: #2563eb;
+}
+
+.hljs-literal {
+    color: #b91c1c;
 }
 
 .review-collapse-toggle,
@@ -823,9 +873,8 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
     mask: var(--icon-file) center / contain no-repeat;
 }
 
-.review-comment p {
+.review-comment .markdown-source {
     margin: 4px 0 0;
-    white-space: pre-wrap;
 }
 
 .review-comment.critical {
@@ -994,6 +1043,35 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
 }
 
 :root[data-theme="dark"] .error {
+    color: #fca5a5;
+}
+
+:root[data-theme="dark"] .hljs-section,
+:root[data-theme="dark"] .hljs-strong {
+    color: #fdba74;
+}
+
+:root[data-theme="dark"] .hljs-emphasis {
+    color: #5bd0b2;
+}
+
+:root[data-theme="dark"] .hljs-code,
+:root[data-theme="dark"] .hljs-quote {
+    color: #c4b5fd;
+}
+
+:root[data-theme="dark"] .hljs-bullet,
+:root[data-theme="dark"] .hljs-symbol,
+:root[data-theme="dark"] .hljs-link {
+    color: #fbbf24;
+}
+
+:root[data-theme="dark"] .hljs-string,
+:root[data-theme="dark"] .hljs-title {
+    color: #93c5fd;
+}
+
+:root[data-theme="dark"] .hljs-literal {
     color: #fca5a5;
 }
 

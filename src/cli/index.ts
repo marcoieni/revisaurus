@@ -286,7 +286,7 @@ function demoReviews(): PullRequestReview[] {
             reviewedCommit: "9f3b7c2d8a1e4f52b6c901df774aa018e8db7210",
             reviewedAt: new Date(now - 16 * 60 * 60 * 1000).toISOString(),
             summary:
-                "The cache layer is a useful performance win, but the current key omits the viewer role and can leak activity totals across permission scopes.\n\nRecommended follow-up:\n- Partition the cache by viewer role or permission scope.\n- Add coverage for owner-to-viewer cache reuse.",
+                "**Cache key issue found:** the new cache layer is a useful performance win, but the current key omits `viewerRole` and can leak activity totals across permission scopes.\n\nRecommended follow-up:\n- Partition the cache by viewer role or permission scope.\n- Add coverage for **owner-to-viewer** cache reuse.\n\nSee `getActivitySummary` before merging.",
             rawOutput:
                 "Found one high-impact cache key issue and one lower-risk invalidation gap around archived projects.",
             diff: `diff --git a/src/activity/cache.ts b/src/activity/cache.ts
@@ -329,14 +329,14 @@ index c112243..2d7e401 100644
                     line: 5,
                     side: "right",
                     severity: "critical",
-                    body: "This key only includes the project id, so a restricted viewer can receive a summary cached for an owner.\n\nInclude viewerRole or a permission scope in the key before storing the response.",
+                    body: "**Security:** this key only includes `projectId`, so a restricted viewer can receive a summary cached for an owner.\n\nInclude `viewerRole` or a permission scope in the key before storing the response.",
                 },
                 {
                     path: "src/activity/cache.ts",
                     line: 14,
                     side: "right",
                     severity: "warning",
-                    body: "Consider invalidating this when projects are archived or restored.\n\nOtherwise the dashboard can show stale activity for up to five minutes.",
+                    body: "Consider invalidating this when projects are **archived** or **restored**.\n\nOtherwise the dashboard can show stale activity for up to five minutes.",
                 },
             ],
         },
