@@ -104,8 +104,7 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
             const collapsed = lineAnnotations.length === 0;
             element.toggleAttribute("data-collapsed", collapsed);
 
-            let diff: FileDiff<ReviewAnnotation>;
-            diff = new FileDiff<ReviewAnnotation>({
+            const diff = new FileDiff<ReviewAnnotation>({
                 collapsed,
                 diffStyle: currentDiffStyle,
                 overflow: currentOverflow,
