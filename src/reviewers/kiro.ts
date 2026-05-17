@@ -4,6 +4,7 @@ import type { ReviewComment, ReviewerConfig } from "../types/revisaur.js";
 import { stripControlCharacters } from "../utils/sanitizeText.js";
 
 const reviewSeverities = new Set<ReviewComment["severity"]>(["critical", "note", "suggestion", "warning"]);
+const reviewerEnvironmentKeys = ["HOME", "KIRO_API_KEY", "PATH"] as const;
 const reviewJsonShape = `{
   "summary": "short markdown summary",
   "comments": [
@@ -45,7 +46,9 @@ export class KiroReviewer implements Reviewer {
 
         const result = await execa(this.config.command, args, {
             timeout: this.config.timeoutSeconds * 1000,
-            env: process.env,
+            // The reviewer consumes attacker-influenced PR diffs, so do not inherit
+            // workflow credentials such as GITHUB_TOKEN.
+            env: reviewerEnvironment(),
             reject: false,
         });
 
@@ -56,6 +59,18 @@ export class KiroReviewer implements Reviewer {
 
         return rawOutput;
     }
+}
+
+function reviewerEnvironment(source: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+    const env: NodeJS.ProcessEnv = {};
+
+    for (const key of reviewerEnvironmentKeys) {
+        if (source[key] !== undefined) {
+            env[key] = source[key];
+        }
+    }
+
+    return env;
 }
 
 function buildPrompt(request: ReviewRequest): string {
