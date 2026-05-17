@@ -82,6 +82,15 @@ a {
     display: none;
 }
 
+.filter-controls {
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    gap: 16px;
+    align-items: end;
+    min-width: max-content;
+}
+
 @media (min-width: 1280px) {
     .topbar {
         display: grid;
@@ -92,7 +101,7 @@ a {
     .topbar-controls {
         display: grid;
         flex: 0 1 auto;
-        grid-template-columns: repeat(5, max-content);
+        grid-template-columns: repeat(3, max-content) max-content;
         justify-content: end;
     }
 }
@@ -362,6 +371,7 @@ h1 {
     background: transparent;
     color: #171717;
     cursor: pointer;
+    white-space: nowrap;
 }
 
 .filter-trigger::after {
@@ -1004,10 +1014,15 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
         flex-basis: auto;
         gap: 16px 12px;
         justify-content: flex-start;
+        overflow-x: auto;
     }
 
     .topbar-controls .filter-picker {
         flex-basis: auto;
+    }
+
+    .filter-controls {
+        gap: 12px;
     }
 
     .topbar,

@@ -23,6 +23,21 @@ const authors = [
 ]
   .map(([author, repoIds]) => ({ author, repoIds: [...repoIds] }))
   .sort((first, second) => first.author.localeCompare(second.author));
+const assignees = [
+  ...reviews
+    .reduce((assigneesByName, review) => {
+      for (const assignee of review.pullRequest.assignees ?? []) {
+        const repoIds = assigneesByName.get(assignee) ?? new Set<string>();
+        repoIds.add(review.repoId);
+        assigneesByName.set(assignee, repoIds);
+      }
+
+      return assigneesByName;
+    }, new Map<string, Set<string>>())
+    .entries(),
+]
+  .map(([assignee, repoIds]) => ({ assignee, repoIds: [...repoIds] }))
+  .sort((first, second) => first.assignee.localeCompare(second.assignee));
 const projectUrl = "https://github.com/marcoieni/revisaur";
 const logoUrl = publicAssetPath("logo.png");
 const iconStyle = [
@@ -108,26 +123,47 @@ function prReviewStateLabel(review: PullRequestReview): string {
           <span class="topbar-tooltip" aria-hidden="true">Stacked diff</span>
         </label>
       </fieldset>
-      <RepositoryPicker repositories={repositories} initialRepo={initialRepo} />
-      <FilterPicker
-        id="author"
-        label="Author"
-        dialogTitle="Filter by author"
-        placeholder="Filter authors"
-        allOptionLabel="All authors"
-        allOptionSearch="All authors all"
-        detailKey="authors"
-        eventName="author:selected"
-        noSelectionLabel="No authors"
-        pluralLabel="authors"
-        options={authors.map(({ author, repoIds }) => ({
-          id: author,
-          label: author,
-          repoIds,
-          search: author,
-          selected: true,
-        }))}
-      />
+      <div class="filter-controls" aria-label="Review filters">
+        <RepositoryPicker repositories={repositories} initialRepo={initialRepo} />
+        <FilterPicker
+          id="author"
+          label="Author"
+          dialogTitle="Filter by author"
+          placeholder="Filter authors"
+          allOptionLabel="All authors"
+          allOptionSearch="All authors all"
+          detailKey="authors"
+          eventName="author:selected"
+          noSelectionLabel="No authors"
+          pluralLabel="authors"
+          options={authors.map(({ author, repoIds }) => ({
+            id: author,
+            label: author,
+            repoIds,
+            search: author,
+            selected: true,
+          }))}
+        />
+        <FilterPicker
+          id="assignee"
+          label="Assignee"
+          dialogTitle="Filter by assignee"
+          placeholder="Filter assignees"
+          allOptionLabel="All assignees"
+          allOptionSearch="All assignees all"
+          detailKey="assignees"
+          eventName="assignee:selected"
+          noSelectionLabel="No assignees"
+          pluralLabel="assignees"
+          options={assignees.map(({ assignee, repoIds }) => ({
+            id: assignee,
+            label: assignee,
+            repoIds,
+            search: assignee,
+            selected: true,
+          }))}
+        />
+      </div>
     </div>
   </header>
 
@@ -147,7 +183,12 @@ function prReviewStateLabel(review: PullRequestReview): string {
               const assignees = review.pullRequest.assignees ?? [];
 
               return (
-                <article class="review" data-author={review.pullRequest.author} data-collapsed>
+                <article
+                  class="review"
+                  data-author={review.pullRequest.author}
+                  data-assignees={JSON.stringify(assignees)}
+                  data-collapsed
+                >
                   <header class="review-header">
                     <div class="review-heading">
                       <button class="review-collapse-toggle" type="button" aria-label="Expand pull request" aria-expanded="false">
@@ -220,8 +261,12 @@ function prReviewStateLabel(review: PullRequestReview): string {
 
   const sections = [...document.querySelectorAll<HTMLElement>(".repo-section")];
   const authorPicker = document.querySelector<HTMLElement>('[data-filter-picker][data-detail-key="authors"]');
+  const assigneePicker = document.querySelector<HTMLElement>('[data-filter-picker][data-detail-key="assignees"]');
   const authorOptions = [
     ...(authorPicker?.querySelectorAll<HTMLButtonElement>("[data-filter-option][data-option-repos]") ?? []),
+  ];
+  const assigneeOptions = [
+    ...(assigneePicker?.querySelectorAll<HTMLButtonElement>("[data-filter-option][data-option-repos]") ?? []),
   ];
   const themeSelector = document.querySelector<HTMLElement>(".theme-selector");
   const themeInputs = [...document.querySelectorAll<HTMLInputElement>('input[name="theme"]')];
@@ -231,8 +276,10 @@ function prReviewStateLabel(review: PullRequestReview): string {
   const diffLayoutInputs = [...document.querySelectorAll<HTMLInputElement>('input[name="diff-layout"]')];
   const allRepositoriesId = "__all";
   const allAuthorsId = "__all";
+  const allAssigneesId = "__all";
   let selectedRepoIds = [document.querySelector<HTMLElement>(".repo-section:not([hidden])")?.dataset.repo ?? allRepositoriesId];
   let selectedAuthors = [allAuthorsId];
+  let selectedAssignees = [allAssigneesId];
   type ColorMode = "light" | "dark";
   type DiffOverflow = "scroll" | "wrap";
   type DiffLayout = "split" | "stacked";
@@ -325,6 +372,7 @@ function prReviewStateLabel(review: PullRequestReview): string {
   const applyReviewFilters = () => {
     const showAllRepositories = selectedRepoIds.includes(allRepositoriesId);
     const showAllAuthors = selectedAuthors.includes(allAuthorsId);
+    const showAllAssignees = selectedAssignees.includes(allAssigneesId);
 
     for (const section of sections) {
       const repoMatches = showAllRepositories || selectedRepoIds.includes(section.dataset.repo ?? "");
@@ -332,17 +380,20 @@ function prReviewStateLabel(review: PullRequestReview): string {
 
       for (const review of section.querySelectorAll<HTMLElement>(".review")) {
         const authorMatches = showAllAuthors || selectedAuthors.includes(review.dataset.author ?? "");
-        review.hidden = !authorMatches;
-        hasVisibleReviews = hasVisibleReviews || authorMatches;
+        const reviewAssignees = JSON.parse(review.dataset.assignees ?? "[]") as string[];
+        const assigneeMatches = showAllAssignees || reviewAssignees.some((assignee) => selectedAssignees.includes(assignee));
+        const reviewMatches = authorMatches && assigneeMatches;
+        review.hidden = !reviewMatches;
+        hasVisibleReviews = hasVisibleReviews || reviewMatches;
       }
 
-      section.hidden = !repoMatches || (!showAllAuthors && !hasVisibleReviews);
+      section.hidden = !repoMatches || ((!showAllAuthors || !showAllAssignees) && !hasVisibleReviews);
     }
   };
 
-  const availableAuthorsForSelectedRepositories = () => {
+  const availableOptionsForSelectedRepositories = (options: HTMLButtonElement[]) => {
     const showAllRepositories = selectedRepoIds.includes(allRepositoriesId);
-    return authorOptions
+    return options
       .filter((option) => {
         if (showAllRepositories) return true;
 
@@ -358,7 +409,18 @@ function prReviewStateLabel(review: PullRequestReview): string {
     authorPicker?.dispatchEvent(
       new CustomEvent("filter:available-options", {
         detail: {
-          optionIds: availableAuthorsForSelectedRepositories(),
+          optionIds: availableOptionsForSelectedRepositories(authorOptions),
+          selectAllIfEmpty: true,
+        },
+      }),
+    );
+  };
+
+  const updateAssigneeFilterOptions = () => {
+    assigneePicker?.dispatchEvent(
+      new CustomEvent("filter:available-options", {
+        detail: {
+          optionIds: availableOptionsForSelectedRepositories(assigneeOptions),
           selectAllIfEmpty: true,
         },
       }),
@@ -370,6 +432,7 @@ function prReviewStateLabel(review: PullRequestReview): string {
       ? event.detail.repoIds
       : [];
     updateAuthorFilterOptions();
+    updateAssigneeFilterOptions();
     applyReviewFilters();
   });
 
@@ -380,7 +443,15 @@ function prReviewStateLabel(review: PullRequestReview): string {
     applyReviewFilters();
   });
 
+  document.addEventListener("assignee:selected", (event) => {
+    selectedAssignees = event instanceof CustomEvent && Array.isArray(event.detail.assignees)
+      ? event.detail.assignees
+      : [];
+    applyReviewFilters();
+  });
+
   updateAuthorFilterOptions();
+  updateAssigneeFilterOptions();
 
   for (const button of document.querySelectorAll<HTMLButtonElement>(".review-collapse-toggle")) {
     const review = button.closest<HTMLElement>(".review");
