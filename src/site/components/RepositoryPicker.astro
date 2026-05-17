@@ -7,6 +7,7 @@ const { initialRepo, repositories } = Astro.props as {
   repositories: Array<Pick<RepositoryConfig, "id" | "name" | "provider" | "url" | "owner" | "repo">>;
 };
 
+const allRepositoriesId = "__all";
 const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
 ---
 
@@ -36,6 +37,18 @@ const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
     </button>
   </div>
   <div id="repo-options" class="repo-options" role="listbox" hidden>
+    <button
+      id="repo-option-all"
+      type="button"
+      role="option"
+      data-repo-option
+      data-repo-id={allRepositoriesId}
+      data-repo-label="All repositories"
+      data-repo-search="All repositories all"
+      aria-selected="false"
+    >
+      <span>All repositories</span>
+    </button>
     {
       repositories.map((repo, index) => (
         <button
