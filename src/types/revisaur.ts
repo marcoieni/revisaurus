@@ -42,6 +42,7 @@ export interface PullRequestSummary {
     title: string;
     url: string;
     author: string;
+    assignees?: string[];
     headSha: string;
     baseSha: string;
     updatedAt: string;

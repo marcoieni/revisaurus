@@ -37,12 +37,12 @@ const iconStyle = [
   .map(([name, path]) => `${name}: ${publicAssetCssUrl(path)}`)
   .join("; ");
 
-function getAuthorUrl(review: PullRequestReview): string | undefined {
-  if (review.pullRequest.provider !== "github" || review.pullRequest.author === "unknown") {
+function getUserUrl(review: PullRequestReview, user: string): string | undefined {
+  if (review.pullRequest.provider !== "github" || user === "unknown") {
     return undefined;
   }
 
-  return `https://github.com/${encodeURIComponent(review.pullRequest.author)}`;
+  return `https://github.com/${encodeURIComponent(user)}`;
 }
 
 function prReviewStateLabel(review: PullRequestReview): string {
@@ -143,7 +143,8 @@ function prReviewStateLabel(review: PullRequestReview): string {
           {reviews
             .filter((review) => review.repoId === repo.id)
             .map((review) => {
-              const authorUrl = getAuthorUrl(review);
+              const authorUrl = getUserUrl(review, review.pullRequest.author);
+              const assignees = review.pullRequest.assignees ?? [];
 
               return (
                 <article class="review" data-author={review.pullRequest.author} data-collapsed>
@@ -168,6 +169,25 @@ function prReviewStateLabel(review: PullRequestReview): string {
                           ) : (
                             review.pullRequest.author
                           )} · {review.reviewedCommit.slice(0, 8)}
+                          {assignees.length > 0 && (
+                            <>
+                              {" "}· assignees:{" "}
+                              {assignees.map((assignee, index) => {
+                                const assigneeUrl = getUserUrl(review, assignee);
+
+                                return (
+                                  <>
+                                    {index > 0 && <span>, </span>}
+                                    {assigneeUrl ? (
+                                      <a class="review-assignee" href={assigneeUrl}>{assignee}</a>
+                                    ) : (
+                                      <span>{assignee}</span>
+                                    )}
+                                  </>
+                                );
+                              })}
+                            </>
+                          )}
                         </p>
                       </div>
                     </div>
