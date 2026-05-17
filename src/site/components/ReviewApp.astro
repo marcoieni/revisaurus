@@ -110,7 +110,7 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
                         <Fragment set:html={collapseChevronSvg} />
                       </button>
                       <div>
-                        <a href={review.pullRequest.url}>#{review.pullRequest.number} {review.pullRequest.title}</a>
+                        <a href={review.pullRequest.url}>#{review.pullRequest.number}</a> {review.pullRequest.title}
                         <p>
                           {authorUrl ? (
                             <a class="review-author" href={authorUrl}>{review.pullRequest.author}</a>
