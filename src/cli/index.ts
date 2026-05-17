@@ -248,6 +248,16 @@ function demoRepositories(): RepositoryConfig[] {
             maxPullRequests: 5,
             skippedAuthors: [],
         },
+        {
+            id: "github-nimbus-worker",
+            name: "Nimbus Worker",
+            provider: "github",
+            url: "https://github.com/example/nimbus-worker",
+            owner: "example",
+            repo: "nimbus-worker",
+            maxPullRequests: 5,
+            skippedAuthors: [],
+        },
     ];
 }
 
@@ -467,6 +477,113 @@ index 51ed23b..5a299ce 100644
  }`,
             comments: [],
             error: "Reviewer command exited before producing JSON output.",
+        },
+        {
+            repoId: "github-nimbus-worker",
+            pullRequest: {
+                provider: "github",
+                repoId: "github-nimbus-worker",
+                number: 57,
+                reviewState: "approved",
+                title: "Retry failed export jobs",
+                url: "https://github.com/example/nimbus-worker/pull/57",
+                author: "jordan",
+                headSha: "19b6cf0d23f7a40e9c1b4d88fa75e639ad214c0f",
+                baseSha: "c6aa0f37ce7a9a6a6d3c726e2bd9b9f2d43e7a0a",
+                updatedAt: new Date(now - 11 * 60 * 60 * 1000).toISOString(),
+            },
+            status: "reviewed",
+            reviewedCommit: "19b6cf0d23f7a40e9c1b4d88fa75e639ad214c0f",
+            reviewedAt: new Date(now - 10 * 60 * 60 * 1000).toISOString(),
+            summary:
+                "The retry queue now covers transient export failures and preserves the original job metadata.\n\nThe new backoff path should also cap the retry counter before enqueueing follow-up work.",
+            rawOutput:
+                "Found one retry-safety issue: jobs can be requeued beyond the documented maximum attempt count.",
+            diff: `diff --git a/src/jobs/exportRetry.ts b/src/jobs/exportRetry.ts
+index 3c8f2a1..70b546d 100644
+--- a/src/jobs/exportRetry.ts
++++ b/src/jobs/exportRetry.ts
+@@ -8,10 +8,19 @@ const MAX_ATTEMPTS = 5;
+ export async function retryExportJob(job: ExportJob) {
+   const nextAttempt = job.attempt + 1;
+ 
+-  if (nextAttempt > MAX_ATTEMPTS) {
+-    await markExportFailed(job.id);
+-    return;
+-  }
++  const delayMs = Math.min(30000, nextAttempt * 5000);
++  await enqueueExport({
++    ...job,
++    attempt: nextAttempt,
++    runAfter: new Date(Date.now() + delayMs).toISOString(),
++  });
++}
++
++export async function retryFailedExports(jobs: ExportJob[]) {
++  for (const job of jobs) {
++    await retryExportJob(job);
++  }
+ }`,
+            comments: [
+                {
+                    path: "src/jobs/exportRetry.ts",
+                    line: 11,
+                    side: "right",
+                    severity: "warning",
+                    body: "This removed the MAX_ATTEMPTS guard before enqueueing the next job.\n\nKeep the terminal failure branch so permanently failing exports do not retry forever.",
+                },
+            ],
+        },
+        {
+            repoId: "github-nimbus-worker",
+            pullRequest: {
+                provider: "github",
+                repoId: "github-nimbus-worker",
+                number: 51,
+                reviewState: "ready",
+                title: "Stream worker health metrics",
+                url: "https://github.com/example/nimbus-worker/pull/51",
+                author: "casey",
+                headSha: "f84ce159498a5021845c45fbe21f1db8b9fb11dc",
+                baseSha: "52cb1b8ff13861d8295f2d46550653a61e747d09",
+                updatedAt: new Date(now - 4 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+            status: "reviewed",
+            reviewedCommit: "f84ce159498a5021845c45fbe21f1db8b9fb11dc",
+            reviewedAt: new Date(now - 4 * 24 * 60 * 60 * 1000 + 35 * 60 * 1000).toISOString(),
+            summary:
+                "The metrics stream is straightforward and keeps the worker heartbeat visible to operators.\n\nAdd a bounded buffer or drop policy before enabling it for every worker.",
+            rawOutput: "Suggested bounding the metric queue to prevent memory growth under a disconnected sink.",
+            diff: `diff --git a/src/metrics/stream.ts b/src/metrics/stream.ts
+index 42b8dd0..65463ef 100644
+--- a/src/metrics/stream.ts
++++ b/src/metrics/stream.ts
+@@ -1,8 +1,18 @@
+ import { collectWorkerMetrics } from "./collect";
+ 
++const subscribers = new Set<(event: WorkerMetric) => void>();
++
+ export function publishWorkerMetric(workerId: string) {
+   const metric = collectWorkerMetrics(workerId);
+-  console.log(JSON.stringify(metric));
++  for (const subscriber of subscribers) {
++    subscriber(metric);
++  }
+ }
++
++export function subscribeToWorkerMetrics(callback: (event: WorkerMetric) => void) {
++  subscribers.add(callback);
++  return () => subscribers.delete(callback);
++}`,
+            comments: [
+                {
+                    path: "src/metrics/stream.ts",
+                    line: 4,
+                    side: "right",
+                    severity: "suggestion",
+                    body: "This unbounded subscriber set depends on every caller invoking the returned cleanup.\n\nConsider adding idle timeouts or connection lifecycle tests.",
+                },
+            ],
         },
     ];
 }
