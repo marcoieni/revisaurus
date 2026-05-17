@@ -173,6 +173,7 @@ function prReviewStateLabel(review: PullRequestReview): string {
   const diffOverflowInputs = [...document.querySelectorAll<HTMLInputElement>('input[name="diff-overflow"]')];
   const diffLayoutSelector = document.querySelector<HTMLElement>(".diff-layout-selector");
   const diffLayoutInputs = [...document.querySelectorAll<HTMLInputElement>('input[name="diff-layout"]')];
+  const allRepositoriesId = "__all";
   type ColorMode = "light" | "dark";
   type DiffOverflow = "scroll" | "wrap";
   type DiffLayout = "split" | "stacked";
@@ -265,7 +266,7 @@ function prReviewStateLabel(review: PullRequestReview): string {
   document.addEventListener("repo:selected", (event) => {
     const selectedRepo = event instanceof CustomEvent ? event.detail.repoId : "";
     for (const section of sections) {
-      section.hidden = section.dataset.repo !== selectedRepo;
+      section.hidden = selectedRepo !== allRepositoriesId && section.dataset.repo !== selectedRepo;
     }
   });
 
