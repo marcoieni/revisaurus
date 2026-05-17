@@ -236,8 +236,12 @@ function browserReviewKey(review: PullRequestReview): string {
                     </div>
                     <div class="review-meta">
                       <label class="addressed-toggle">
-                        <input type="checkbox" data-addressed-toggle data-addressed-key={`${reviewKey}:pr`} />
-                        <span>Addressed</span>
+                        <input
+                          type="checkbox"
+                          data-addressed-toggle
+                          data-addressed-key={`${reviewKey}:pr`}
+                          aria-label="Addressed"
+                        />
                       </label>
                       <ReviewIndicator review={review} />
                       <time datetime={review.reviewedAt}>{new Date(review.reviewedAt).toLocaleString()}</time>

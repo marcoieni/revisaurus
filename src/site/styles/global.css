@@ -636,7 +636,7 @@ h1 {
 
 .addressed-toggle {
     display: inline-grid;
-    grid-template-columns: 16px minmax(0, max-content);
+    grid-template-columns: 16px;
     align-items: center;
     gap: 7px;
     color: #4f4a40;
