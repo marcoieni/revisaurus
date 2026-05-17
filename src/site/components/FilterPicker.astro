@@ -262,6 +262,22 @@ const {
       syncSelectedOptions();
     };
 
+    const setSelectedIds = (selectedIds: string[]) => {
+      const requestedIds = new Set(selectedIds);
+      const selectAll = requestedIds.has(allOptionId);
+
+      for (const option of selectableOptions) {
+        const optionId = option.dataset.optionId ?? "";
+        option.setAttribute(
+          "aria-selected",
+          String(option.dataset.optionAvailable !== "false" && (selectAll || requestedIds.has(optionId))),
+        );
+      }
+
+      filterOptions();
+      syncSelectedOptions();
+    };
+
     const openMenu = () => {
       if (!input) return;
 
@@ -363,6 +379,14 @@ const {
 
       filterOptions();
       syncSelectedOptions();
+    });
+
+    picker.addEventListener("filter:selected-options", (event) => {
+      if (!(event instanceof CustomEvent) || !Array.isArray(event.detail.optionIds)) return;
+
+      setSelectedIds(
+        event.detail.optionIds.filter((optionId: unknown): optionId is string => typeof optionId === "string"),
+      );
     });
 
     syncSelectedOptions();
