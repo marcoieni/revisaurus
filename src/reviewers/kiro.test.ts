@@ -4,14 +4,16 @@ import { KiroReviewer } from "./kiro.js";
 import type { ReviewerConfig } from "../types/revisaur.js";
 
 vi.mock("execa", () => ({
-    execa: vi.fn(() => Promise.resolve({
-        failed: false,
-        stdout: JSON.stringify({
-            summary: "Looks good.",
-            comments: [],
+    execa: vi.fn(() =>
+        Promise.resolve({
+            failed: false,
+            stdout: JSON.stringify({
+                summary: "Looks good.",
+                comments: [],
+            }),
+            stderr: "",
         }),
-        stderr: "",
-    })),
+    ),
 }));
 
 const request = {

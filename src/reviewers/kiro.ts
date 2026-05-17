@@ -48,10 +48,10 @@ export class KiroReviewer implements Reviewer {
 
 function buildPrompt(request: ReviewRequest): string {
     const configuredInstructions = request.promptInstructions?.trim();
-    const additionalInstructions = configuredInstructions
-        !== undefined && configuredInstructions !== ""
-        ? `\nAdditional instructions:\n${configuredInstructions}\n`
-        : "";
+    const additionalInstructions =
+        configuredInstructions !== undefined && configuredInstructions !== ""
+            ? `\nAdditional instructions:\n${configuredInstructions}\n`
+            : "";
 
     return `Review this pull request diff.
 
@@ -125,9 +125,10 @@ function formatReviewerFailure(
     result: { exitCode?: number; timedOut?: boolean; stdout: string; stderr: string },
     rawOutput: string,
 ): string {
-    const reason = result.timedOut === true
-        ? "Reviewer command timed out"
-        : `Reviewer command exited with code ${(result.exitCode ?? "unknown").toString()}`;
+    const reason =
+        result.timedOut === true
+            ? "Reviewer command timed out"
+            : `Reviewer command exited with code ${(result.exitCode ?? "unknown").toString()}`;
     return `${reason}.${previewOutput(rawOutput)}`;
 }
 
