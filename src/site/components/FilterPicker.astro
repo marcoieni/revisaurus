@@ -163,8 +163,8 @@ const {
     };
 
     const formatSelectedOptions = (selectedIds: string[]) => {
-      if (selectedIds.length === 0) return noSelectionLabel;
       if (selectedIds.length === availableSelectableOptions().length) return allOptionLabel;
+      if (selectedIds.length === 0) return noSelectionLabel;
       if (selectedIds.length === 1) {
         const selected = selectableOptions.find((option) => option.dataset.optionId === selectedIds[0]);
         return selected?.dataset.optionLabel ?? selectedIds[0] ?? "";
@@ -177,7 +177,7 @@ const {
       if (!trigger) return;
 
       const selectedIds = getSelectedIds();
-      const allSelected = selectedIds.length > 0 && selectedIds.length === availableSelectableOptions().length;
+      const allSelected = selectedIds.length === availableSelectableOptions().length;
       options
         .find((option) => option.dataset.optionId === allOptionId)
         ?.setAttribute("aria-selected", String(allSelected));
