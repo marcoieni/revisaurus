@@ -340,6 +340,9 @@ const {
       if (!(event instanceof CustomEvent) || !Array.isArray(event.detail.optionIds)) return;
 
       const availableIds = new Set(event.detail.optionIds.filter((optionId: unknown) => typeof optionId === "string"));
+      const previouslyAvailableOptions = availableSelectableOptions();
+      const hadAllAvailableSelected = previouslyAvailableOptions.length > 0
+        && previouslyAvailableOptions.every((option) => option.getAttribute("aria-selected") === "true");
       let selectedAvailableCount = 0;
       for (const option of selectableOptions) {
         const optionId = option.dataset.optionId ?? "";
@@ -354,7 +357,7 @@ const {
         }
       }
 
-      if (event.detail.selectAllIfEmpty === true && selectedAvailableCount === 0) {
+      if (hadAllAvailableSelected || (event.detail.selectAllIfEmpty === true && selectedAvailableCount === 0)) {
         availableSelectableOptions().forEach((option) => option.setAttribute("aria-selected", "true"));
       }
 
