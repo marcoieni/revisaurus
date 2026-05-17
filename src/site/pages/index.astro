@@ -2,21 +2,80 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import ReviewApp from "../components/ReviewApp.astro";
+import { showcaseData } from "../showcaseData.js";
 import "../styles/global.css";
 
 const dataDir = import.meta.env.REVISAUR_DATA_DIR ?? ".revisaur/data";
 const workspace = import.meta.env.REVISAUR_WORKSPACE ?? process.cwd();
 const siteDataPath = path.resolve(workspace, dataDir, "site.json");
-const siteData = JSON.parse(await readFile(siteDataPath, "utf8"));
+const siteData = await loadSiteData();
+const isShowcase = siteData === showcaseData;
+
+async function loadSiteData() {
+  try {
+    return JSON.parse(await readFile(siteDataPath, "utf8"));
+  } catch (error) {
+    if (isMissingSiteData(error)) {
+      return showcaseData;
+    }
+
+    throw error;
+  }
+}
+
+function isMissingSiteData(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
+}
 ---
 
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Revisaur</title>
+    <meta
+      name="description"
+      content="Revisaur generates a static Astro dashboard with AI reviews for recently updated pull requests."
+    />
+    <title>{isShowcase ? "Revisaur - AI PR reviews in a static Astro dashboard" : "Revisaur"}</title>
   </head>
   <body>
+    {
+      isShowcase && (
+        <section class="showcase-hero" aria-labelledby="showcase-title">
+          <div class="showcase-hero-inner">
+            <div class="showcase-copy">
+              <p class="showcase-kicker">Static PR review dashboard</p>
+              <h1 id="showcase-title">Revisaur turns recent pull requests into an AI-reviewed Astro site.</h1>
+              <p>
+                Configure repositories, run an AI reviewer for new PR head commits, and publish the generated dashboard
+                to GitHub Pages. The live surface below is the same component Revisaur outputs for real review runs.
+              </p>
+              <div class="showcase-actions" aria-label="Project links">
+                <a href="https://github.com/marcoieni/revisaur">GitHub</a>
+                <a href="https://github.com/marcoieni/revisaur/blob/main/docs/github-action.md">GitHub Pages action</a>
+              </div>
+            </div>
+            <div class="showcase-facts" aria-label="Feature summary">
+              <div>
+                <span>01</span>
+                <strong>Fetches recent PRs</strong>
+                <p>GitHub support is built in, with provider boundaries ready for GitLab and Forgejo.</p>
+              </div>
+              <div>
+                <span>02</span>
+                <strong>Reviews once per commit</strong>
+                <p>State is keyed by repository, PR number, and head SHA to avoid repeated AI runs.</p>
+              </div>
+              <div>
+                <span>03</span>
+                <strong>Publishes static output</strong>
+                <p>Astro builds a portable dashboard with markdown summaries, annotated diffs, and filters.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )
+    }
     <ReviewApp data={siteData} />
   </body>
 </html>
