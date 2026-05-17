@@ -2,7 +2,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import ReviewApp from "../components/ReviewApp.astro";
-import { publicAssetPath } from "../runtime/assets";
+import { publicAssetPath } from "../runtime/assets.js";
 import "../styles/global.css";
 
 const dataDir = import.meta.env.REVISAUR_DATA_DIR ?? ".revisaur/data";
