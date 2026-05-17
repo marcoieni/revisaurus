@@ -496,6 +496,10 @@ h1 {
     text-align: left;
 }
 
+.repo-options-list button[hidden] {
+    display: none;
+}
+
 .repo-options-list button:last-child {
     border-bottom: 0;
 }
