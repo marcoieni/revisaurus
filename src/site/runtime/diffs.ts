@@ -26,6 +26,8 @@ const currentTheme = getCurrentTheme();
 let currentOverflow = getCurrentOverflow();
 let currentDiffStyle = getCurrentDiffStyle();
 const copyFileNameLabel = "Copy file name to clipboard";
+const addressedStorageKey = "revisaur:addressed:v1";
+let addressedState = loadAddressedState();
 
 for (const summary of document.querySelectorAll<HTMLElement>(".summary")) {
     const markdownSource = summary.textContent;
@@ -66,6 +68,7 @@ function updateRenderedDiffOptions(options: {
 }
 
 for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
+    const reviewKey = container.dataset.reviewKey ?? "unknown-review";
     const patch = decodeURIComponent(container.dataset.patch ?? "");
     const comments = parseReviewComments(decodeURIComponent(container.dataset.comments ?? "[]"));
 
@@ -76,13 +79,16 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
         for (const fileDiff of patchSet.files) {
             const element = document.createElement(DIFFS_TAG_NAME);
             const lineAnnotations: DiffLineAnnotation<ReviewAnnotation>[] = comments
-                .filter((comment) => comment.path === fileDiff.name || comment.path === fileDiff.prevName)
-                .map((comment) => ({
+                .map((comment, index) => ({ comment, index }))
+                .filter(({ comment }) => comment.path === fileDiff.name || comment.path === fileDiff.prevName)
+                .map(({ comment, index }) => ({
                     lineNumber: comment.line,
                     side: comment.side === "right" ? ("additions" as const) : ("deletions" as const),
                     metadata: {
+                        addressedKey: commentAddressedKey(reviewKey, comment, index),
                         path: comment.path,
                         line: comment.line,
+                        side: comment.side,
                         severity: comment.severity,
                         body: comment.body,
                     },
@@ -109,11 +115,19 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
                 renderAnnotation(annotation) {
                     const comment = annotation.metadata;
                     const location = `${comment.path}:${comment.line.toString()}`;
+                    const addressed = addressedState[comment.addressedKey] ?? false;
                     const node = document.createElement("div");
                     node.className = `review-comment ${comment.severity}`;
+                    node.toggleAttribute("data-addressed", addressed);
                     node.style.color = "#171717";
-                    node.innerHTML = `<div class="review-comment-header"><strong>${comment.severity}</strong><button class="copy-location-button" type="button" data-location="${escapeAttribute(location)}" data-tooltip="${copyFileNameLabel}" aria-label="${copyFileNameLabel}"><span class="copy-location-icon" aria-hidden="true"></span><span class="sr-only">${copyFileNameLabel}</span></button></div>`;
+                    node.innerHTML = `<div class="review-comment-header"><label class="addressed-toggle review-comment-addressed"><input type="checkbox" data-addressed-toggle data-addressed-key="${escapeAttribute(comment.addressedKey)}"${addressed ? " checked" : ""} /><span>Addressed</span></label><strong>${escapeHtml(comment.severity)}</strong><button class="copy-location-button" type="button" data-location="${escapeAttribute(location)}" data-tooltip="${copyFileNameLabel}" aria-label="${copyFileNameLabel}"><span class="copy-location-icon" aria-hidden="true"></span><span class="sr-only">${copyFileNameLabel}</span></button></div>`;
                     renderMarkdownSource(node, comment.body);
+                    const addressedToggle = node.querySelector<HTMLInputElement>("[data-addressed-toggle]");
+                    addressedToggle?.addEventListener("change", () => {
+                        addressedState = { ...addressedState, [comment.addressedKey]: addressedToggle.checked };
+                        saveAddressedState();
+                        node.toggleAttribute("data-addressed", addressedToggle.checked);
+                    });
                     const button = node.querySelector<HTMLButtonElement>(".copy-location-button");
                     button?.addEventListener("click", () => {
                         void copyLocation(button, location);
@@ -182,6 +196,49 @@ function escapeHtml(value: string): string {
 
 function escapeAttribute(value: string): string {
     return escapeHtml(value).replaceAll('"', "&quot;");
+}
+
+function commentAddressedKey(reviewKey: string, comment: ReviewCommentData, index: number): string {
+    return [
+        reviewKey,
+        "comment",
+        index.toString(),
+        comment.path,
+        comment.side,
+        comment.line.toString(),
+        hashString(comment.body),
+    ].join(":");
+}
+
+function hashString(value: string): string {
+    let hash = 0;
+
+    for (const character of value) {
+        const codePoint = character.codePointAt(0) ?? 0;
+        hash = (Math.imul(31, hash) + codePoint) | 0;
+    }
+
+    return (hash >>> 0).toString(36);
+}
+
+function loadAddressedState(): Record<string, boolean> {
+    try {
+        const storedState = localStorage.getItem(addressedStorageKey);
+        const parsed: unknown = storedState === null ? {} : JSON.parse(storedState);
+        return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
+            ? Object.fromEntries(Object.entries(parsed).filter(([, value]) => typeof value === "boolean"))
+            : {};
+    } catch {
+        return {};
+    }
+}
+
+function saveAddressedState(): void {
+    try {
+        localStorage.setItem(addressedStorageKey, JSON.stringify(addressedState));
+    } catch {
+        // Keep the in-memory state for the current page when storage is unavailable.
+    }
 }
 
 function renderMarkdownSource(container: HTMLElement, markdownSource: string): void {
@@ -266,8 +323,10 @@ function updateCollapseButtonState(button: HTMLButtonElement, collapsed: boolean
 }
 
 interface ReviewAnnotation {
+    addressedKey: string;
     path: string;
     line: number;
+    side: "left" | "right";
     severity: string;
     body: string;
 }

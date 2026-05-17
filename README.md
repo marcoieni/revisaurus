@@ -99,6 +99,8 @@ See [docs/github-action.md](docs/github-action.md) for a workflow using the comp
 
 The generated Astro site uses [`@pierre/diffs`](https://diffs.com/) to render pull request patches and line-specific AI review comments.
 
+Each pull request review and each line-specific AI comment has an `Addressed` checkbox. These checks are stored in the browser with `localStorage` under `revisaur:addressed:v1`, because the generated website is static and has no backend. This makes the addressed state private to the current browser profile: it is not committed to the generated site, synced across devices, or shared with other users.
+
 ## Icons
 
 The site uses the following icons from [lucide.dev](https://lucide.dev):

@@ -61,6 +61,15 @@ function prReviewStateLabel(review: PullRequestReview): string {
       return "Ready for review";
   }
 }
+
+function browserReviewKey(review: PullRequestReview): string {
+  return [
+    review.pullRequest.provider,
+    review.repoId,
+    review.pullRequest.number,
+    review.reviewedCommit,
+  ].join(":");
+}
 ---
 
 <main class="app-shell" style={iconStyle}>
@@ -172,10 +181,12 @@ function prReviewStateLabel(review: PullRequestReview): string {
             .map((review) => {
               const authorUrl = getUserUrl(review, review.pullRequest.author);
               const assignees = review.pullRequest.assignees ?? [];
+              const reviewKey = browserReviewKey(review);
 
               return (
                 <article
                   class="review"
+                  data-review-key={reviewKey}
                   data-author={review.pullRequest.author}
                   data-assignees={JSON.stringify(assignees)}
                   data-collapsed
@@ -224,6 +235,10 @@ function prReviewStateLabel(review: PullRequestReview): string {
                       </div>
                     </div>
                     <div class="review-meta">
+                      <label class="addressed-toggle">
+                        <input type="checkbox" data-addressed-toggle data-addressed-key={`${reviewKey}:pr`} />
+                        <span>Addressed</span>
+                      </label>
                       <ReviewIndicator review={review} />
                       <time datetime={review.reviewedAt}>{new Date(review.reviewedAt).toLocaleString()}</time>
                     </div>
@@ -233,6 +248,7 @@ function prReviewStateLabel(review: PullRequestReview): string {
                     {review.error && <pre class="error">{review.error}</pre>}
                     <div
                       class="diff-view"
+                      data-review-key={reviewKey}
                       data-patch={encodeURIComponent(review.diff)}
                       data-comments={encodeURIComponent(JSON.stringify(review.comments))}
                     >
@@ -268,9 +284,11 @@ function prReviewStateLabel(review: PullRequestReview): string {
   const allRepositoriesId = "__all";
   const allAuthorsId = "__all";
   const allAssigneesId = "__all";
+  const addressedStorageKey = "revisaur:addressed:v1";
   let selectedRepoIds = [document.querySelector<HTMLElement>(".repo-section:not([hidden])")?.dataset.repo ?? allRepositoriesId];
   let selectedAuthors = [allAuthorsId];
   let selectedAssignees = [allAssigneesId];
+  let addressedState = loadAddressedState();
   type ColorMode = "light" | "dark";
   type DiffOverflow = "scroll" | "wrap";
   type DiffLayout = "split" | "stacked";
@@ -278,6 +296,41 @@ function prReviewStateLabel(review: PullRequestReview): string {
   const isColorMode = (value: string | null): value is ColorMode => value === "light" || value === "dark";
   const isDiffOverflow = (value: string | null): value is DiffOverflow => value === "scroll" || value === "wrap";
   const isDiffLayout = (value: string | null): value is DiffLayout => value === "split" || value === "stacked";
+  function loadAddressedState(): Record<string, boolean> {
+    try {
+      const storedState = localStorage.getItem(addressedStorageKey);
+      const parsed: unknown = storedState === null ? {} : JSON.parse(storedState);
+      return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
+        ? Object.fromEntries(Object.entries(parsed).filter(([, value]) => typeof value === "boolean"))
+        : {};
+    } catch {
+      return {};
+    }
+  }
+  function saveAddressedState(): void {
+    try {
+      localStorage.setItem(addressedStorageKey, JSON.stringify(addressedState));
+    } catch {
+      // Keep the in-memory state for the current page when storage is unavailable.
+    }
+  }
+  const applyAddressedState = (input: HTMLInputElement, addressed: boolean) => {
+    input.checked = addressed;
+    input.closest<HTMLElement>(".review")?.toggleAttribute("data-addressed", addressed);
+  };
+  const initializeAddressedToggle = (input: HTMLInputElement) => {
+    const addressedKey = input.dataset.addressedKey;
+    if (!addressedKey) {
+      return;
+    }
+
+    applyAddressedState(input, addressedState[addressedKey] ?? false);
+    input.addEventListener("change", () => {
+      addressedState = { ...addressedState, [addressedKey]: input.checked };
+      saveAddressedState();
+      applyAddressedState(input, input.checked);
+    });
+  };
   const getInitialTheme = (): ColorMode => {
     const storedTheme = localStorage.getItem("revisaur:theme");
     if (isColorMode(storedTheme)) {
@@ -325,6 +378,10 @@ function prReviewStateLabel(review: PullRequestReview): string {
   applyTheme(getInitialTheme());
   applyDiffOverflow(getInitialDiffOverflow());
   applyDiffLayout(getInitialDiffLayout());
+
+  for (const input of document.querySelectorAll<HTMLInputElement>("[data-addressed-toggle]")) {
+    initializeAddressedToggle(input);
+  }
 
   for (const tooltipControl of document.querySelectorAll<HTMLElement>(".topbar-controls .has-tooltip")) {
     tooltipControl.addEventListener("pointerdown", () => {
