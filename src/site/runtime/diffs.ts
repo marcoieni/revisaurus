@@ -9,6 +9,7 @@ import {
 } from "@pierre/diffs";
 import hljs from "highlight.js/lib/core";
 import markdown from "highlight.js/lib/languages/markdown";
+import { commentAddressedKey, loadAddressedState, setAddressedValue, type AddressedComment } from "./addressed.js";
 import { collapseChevronSvg } from "./icons.js";
 
 hljs.registerLanguage("markdown", markdown);
@@ -26,7 +27,6 @@ const currentTheme = getCurrentTheme();
 let currentOverflow = getCurrentOverflow();
 let currentDiffStyle = getCurrentDiffStyle();
 const copyFileNameLabel = "Copy file name to clipboard";
-const addressedStorageKey = "revisaur:addressed:v1";
 let addressedState = loadAddressedState();
 
 for (const summary of document.querySelectorAll<HTMLElement>(".summary")) {
@@ -124,8 +124,11 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
                     renderMarkdownSource(node, comment.body);
                     const addressedToggle = node.querySelector<HTMLInputElement>("[data-addressed-toggle]");
                     addressedToggle?.addEventListener("change", () => {
-                        addressedState = { ...addressedState, [comment.addressedKey]: addressedToggle.checked };
-                        saveAddressedState();
+                        addressedState = setAddressedValue(
+                            addressedState,
+                            comment.addressedKey,
+                            addressedToggle.checked,
+                        );
                         node.toggleAttribute("data-addressed", addressedToggle.checked);
                         if (addressedToggle.checked && shouldCollapseFile(lineAnnotations)) {
                             setDiffCollapsed(diff, true);
@@ -199,49 +202,6 @@ function escapeHtml(value: string): string {
 
 function escapeAttribute(value: string): string {
     return escapeHtml(value).replaceAll('"', "&quot;");
-}
-
-function commentAddressedKey(reviewKey: string, comment: ReviewCommentData, index: number): string {
-    return [
-        reviewKey,
-        "comment",
-        index.toString(),
-        comment.path,
-        comment.side,
-        comment.line.toString(),
-        hashString(comment.body),
-    ].join(":");
-}
-
-function hashString(value: string): string {
-    let hash = 0;
-
-    for (const character of value) {
-        const codePoint = character.codePointAt(0) ?? 0;
-        hash = (Math.imul(31, hash) + codePoint) | 0;
-    }
-
-    return (hash >>> 0).toString(36);
-}
-
-function loadAddressedState(): Record<string, boolean> {
-    try {
-        const storedState = localStorage.getItem(addressedStorageKey);
-        const parsed: unknown = storedState === null ? {} : JSON.parse(storedState);
-        return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
-            ? Object.fromEntries(Object.entries(parsed).filter(([, value]) => typeof value === "boolean"))
-            : {};
-    } catch {
-        return {};
-    }
-}
-
-function saveAddressedState(): void {
-    try {
-        localStorage.setItem(addressedStorageKey, JSON.stringify(addressedState));
-    } catch {
-        // Keep the in-memory state for the current page when storage is unavailable.
-    }
 }
 
 function renderMarkdownSource(container: HTMLElement, markdownSource: string): void {
@@ -344,17 +304,12 @@ function updateCollapseButtonState(button: HTMLButtonElement, collapsed: boolean
     button.setAttribute("aria-expanded", String(!collapsed));
 }
 
-interface ReviewAnnotation {
+interface ReviewAnnotation extends ReviewCommentData {
     addressedKey: string;
-    path: string;
-    line: number;
-    side: "left" | "right";
-    severity: string;
-    body: string;
 }
 
-interface ReviewCommentData extends ReviewAnnotation {
-    side: "left" | "right";
+interface ReviewCommentData extends AddressedComment {
+    severity: string;
 }
 
 function getCustomEventValue(event: Event, key: string): unknown {

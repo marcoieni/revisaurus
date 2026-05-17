@@ -1,6 +1,7 @@
 ---
 import type { PullRequestReview, RepositoryConfig } from "../../types/revisaur.js";
 import { repositoryLabel } from "../repositories.js";
+import { browserReviewKey, reviewAddressedKey } from "../runtime/addressed.js";
 import { publicAssetCssUrl, publicAssetPath } from "../runtime/assets.js";
 import { collapseChevronSvg } from "../runtime/icons.js";
 import FilterPicker from "./FilterPicker.astro";
@@ -62,14 +63,6 @@ function prReviewStateLabel(review: PullRequestReview): string {
   }
 }
 
-function browserReviewKey(review: PullRequestReview): string {
-  return [
-    review.pullRequest.provider,
-    review.repoId,
-    review.pullRequest.number,
-    review.reviewedCommit,
-  ].join(":");
-}
 ---
 
 <main class="app-shell" style={iconStyle}>
@@ -239,7 +232,7 @@ function browserReviewKey(review: PullRequestReview): string {
                         <input
                           type="checkbox"
                           data-addressed-toggle
-                          data-addressed-key={`${reviewKey}:pr`}
+                          data-addressed-key={reviewAddressedKey(reviewKey)}
                           aria-label="Addressed"
                         />
                       </label>
@@ -268,6 +261,7 @@ function browserReviewKey(review: PullRequestReview): string {
 </main>
 
 <script>
+  import { loadAddressedState, setAddressedValue } from "../runtime/addressed.js";
   import "../runtime/diffs.js";
 
   const sections = [...document.querySelectorAll<HTMLElement>(".repo-section")];
@@ -288,7 +282,6 @@ function browserReviewKey(review: PullRequestReview): string {
   const allRepositoriesId = "__all";
   const allAuthorsId = "__all";
   const allAssigneesId = "__all";
-  const addressedStorageKey = "revisaur:addressed:v1";
   let selectedRepoIds = [document.querySelector<HTMLElement>(".repo-section:not([hidden])")?.dataset.repo ?? allRepositoriesId];
   let selectedAuthors = [allAuthorsId];
   let selectedAssignees = [allAssigneesId];
@@ -300,24 +293,6 @@ function browserReviewKey(review: PullRequestReview): string {
   const isColorMode = (value: string | null): value is ColorMode => value === "light" || value === "dark";
   const isDiffOverflow = (value: string | null): value is DiffOverflow => value === "scroll" || value === "wrap";
   const isDiffLayout = (value: string | null): value is DiffLayout => value === "split" || value === "stacked";
-  function loadAddressedState(): Record<string, boolean> {
-    try {
-      const storedState = localStorage.getItem(addressedStorageKey);
-      const parsed: unknown = storedState === null ? {} : JSON.parse(storedState);
-      return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
-        ? Object.fromEntries(Object.entries(parsed).filter(([, value]) => typeof value === "boolean"))
-        : {};
-    } catch {
-      return {};
-    }
-  }
-  function saveAddressedState(): void {
-    try {
-      localStorage.setItem(addressedStorageKey, JSON.stringify(addressedState));
-    } catch {
-      // Keep the in-memory state for the current page when storage is unavailable.
-    }
-  }
   const updateReviewCollapseButton = (button: HTMLButtonElement, collapsed: boolean) => {
     button.title = collapsed ? "Expand pull request" : "Collapse pull request";
     button.setAttribute("aria-label", button.title);
@@ -346,8 +321,7 @@ function browserReviewKey(review: PullRequestReview): string {
 
     applyAddressedState(input, addressedState[addressedKey] ?? false);
     input.addEventListener("change", () => {
-      addressedState = { ...addressedState, [addressedKey]: input.checked };
-      saveAddressedState();
+      addressedState = setAddressedValue(addressedState, addressedKey, input.checked);
       applyAddressedState(input, input.checked);
     });
   };
