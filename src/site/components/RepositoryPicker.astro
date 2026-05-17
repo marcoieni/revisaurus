@@ -8,72 +8,76 @@ const { initialRepo, repositories } = Astro.props as {
 };
 
 const allRepositoriesId = "__all";
-const selectedRepository = repositories.find((repo) => repo.id === initialRepo);
-const initialLabel = selectedRepository ? repositoryLabel(selectedRepository) : initialRepo;
 ---
 
 <div class="repo-picker" data-repo-combobox>
-  <label for="repo-combobox">Repository</label>
-  <div class="repo-combobox">
+  <button
+    class="repo-filter-trigger"
+    type="button"
+    aria-haspopup="dialog"
+    aria-expanded="false"
+    aria-controls="repo-options"
+    data-selected-repos={initialRepo}
+  >
+    <span>Repository</span>
+  </button>
+  <div id="repo-options" class="repo-options" role="dialog" aria-labelledby="repo-options-title" hidden>
+    <div class="repo-options-header">
+      <h2 id="repo-options-title">Filter by repository</h2>
+      <button class="repo-options-close" type="button" aria-label="Close repository filter"></button>
+    </div>
     <input
       id="repo-combobox"
       type="text"
       role="combobox"
       aria-autocomplete="list"
-      aria-expanded="false"
-      aria-controls="repo-options"
+      aria-expanded="true"
+      aria-controls="repo-options-list"
       aria-activedescendant=""
       autocomplete="off"
       spellcheck="false"
-      value={initialLabel}
-      data-selected-repos={initialRepo}
+      placeholder="Filter repositories"
     />
-    <button
-      class="repo-combobox-toggle"
-      type="button"
-      aria-label="Show repositories"
-      tabindex="-1"
-    >
-      <span class="topbar-tooltip" aria-hidden="true">Show repositories</span>
-    </button>
-  </div>
-  <div id="repo-options" class="repo-options" role="listbox" aria-multiselectable="true" hidden>
-    <button
-      id="repo-option-all"
-      type="button"
-      role="option"
-      data-repo-option
-      data-repo-id={allRepositoriesId}
-      data-repo-label="All repositories"
-      data-repo-search="All repositories all"
-      aria-selected="false"
-    >
-      <span>All repositories</span>
-    </button>
-    {
-      repositories.map((repo, index) => (
-        <button
-          id={`repo-option-${index}`}
-          type="button"
-          role="option"
-          data-repo-option
-          data-repo-id={repo.id}
-          data-repo-label={repositoryLabel(repo)}
-          data-repo-search={`${repositoryLabel(repo)} ${repo.repo} ${repo.id} ${repo.provider}`}
-          aria-selected={repo.id === initialRepo ? "true" : "false"}
-        >
-          <span>{repositoryLabel(repo)}</span>
-        </button>
-      ))
-    }
+    <div id="repo-options-list" class="repo-options-list" role="listbox" aria-multiselectable="true">
+      <button
+        id="repo-option-all"
+        type="button"
+        role="option"
+        data-repo-option
+        data-repo-id={allRepositoriesId}
+        data-repo-label="All repositories"
+        data-repo-search="All repositories all"
+        aria-selected="false"
+      >
+        <span>All repositories</span>
+      </button>
+      {
+        repositories.map((repo, index) => (
+          <button
+            id={`repo-option-${index}`}
+            type="button"
+            role="option"
+            data-repo-option
+            data-repo-id={repo.id}
+            data-repo-label={repositoryLabel(repo)}
+            data-repo-search={`${repositoryLabel(repo)} ${repo.repo} ${repo.id} ${repo.provider}`}
+            aria-selected={repo.id === initialRepo ? "true" : "false"}
+          >
+            <span>{repositoryLabel(repo)}</span>
+          </button>
+        ))
+      }
+    </div>
   </div>
 </div>
 
 <script>
   const picker = document.querySelector<HTMLElement>("[data-repo-combobox]");
+  const trigger = picker?.querySelector<HTMLButtonElement>(".repo-filter-trigger");
   const input = picker?.querySelector<HTMLInputElement>("#repo-combobox");
-  const toggle = picker?.querySelector<HTMLButtonElement>(".repo-combobox-toggle");
+  const closeButton = picker?.querySelector<HTMLButtonElement>(".repo-options-close");
   const listbox = picker?.querySelector<HTMLElement>("#repo-options");
+  const optionList = picker?.querySelector<HTMLElement>("#repo-options-list");
   const options = [...(picker?.querySelectorAll<HTMLButtonElement>("[data-repo-option]") ?? [])];
   const allRepositoriesId = "__all";
   const repoOptions = options.filter((option) => option.dataset.repoId !== allRepositoriesId);
@@ -99,15 +103,15 @@ const initialLabel = selectedRepository ? repositoryLabel(selectedRepository) : 
   };
 
   const syncSelectedRepos = () => {
-    if (!input || !picker) return;
+    if (!trigger || !picker) return;
 
     const selectedRepoIds = getSelectedRepoIds();
     const allSelected = selectedRepoIds.length === repoOptions.length;
     options
       .find((option) => option.dataset.repoId === allRepositoriesId)
       ?.setAttribute("aria-selected", String(allSelected));
-    input.value = formatSelectedRepos(selectedRepoIds);
-    input.dataset.selectedRepos = selectedRepoIds.join(",");
+    trigger.dataset.selectedRepos = selectedRepoIds.join(",");
+    trigger.setAttribute("aria-label", `Repository: ${formatSelectedRepos(selectedRepoIds)}`);
     picker.dispatchEvent(
       new CustomEvent("repo:selected", {
         bubbles: true,
@@ -146,12 +150,13 @@ const initialLabel = selectedRepository ? repositoryLabel(selectedRepository) : 
   };
 
   const setOpen = (open: boolean) => {
-    if (!input || !listbox) return;
+    if (!trigger || !input || !listbox) return;
 
     listbox.hidden = !open;
-    input.setAttribute("aria-expanded", String(open));
+    trigger.setAttribute("aria-expanded", String(open));
     if (!open) {
       input.setAttribute("aria-activedescendant", "");
+      input.value = "";
     }
   };
 
@@ -188,7 +193,7 @@ const initialLabel = selectedRepository ? repositoryLabel(selectedRepository) : 
     [...visibleOptions, ...options.filter((option) => !visibleOptions.includes(option))].forEach((option) => {
       const matches = visibleOptions.includes(option);
       option.hidden = !matches;
-      listbox?.append(option);
+      optionList?.append(option);
     });
 
     setActive(visibleOptions.length > 0 ? 0 : -1);
@@ -209,16 +214,30 @@ const initialLabel = selectedRepository ? repositoryLabel(selectedRepository) : 
     syncSelectedRepos();
   };
 
-  input?.addEventListener("focus", () => {
+  const openMenu = () => {
+    if (!input) return;
+
+    input.value = "";
     filterOptions("");
     setOpen(true);
-    input.select();
+    input.focus();
+  };
+
+  trigger?.addEventListener("click", () => {
+    if (!listbox) return;
+
+    if (listbox.hidden) {
+      openMenu();
+    } else {
+      setOpen(false);
+    }
   });
 
-  input?.addEventListener("click", () => {
-    filterOptions("");
-    setOpen(true);
-    input.select();
+  trigger?.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openMenu();
+    }
   });
 
   input?.addEventListener("input", () => {
@@ -249,27 +268,14 @@ const initialLabel = selectedRepository ? repositoryLabel(selectedRepository) : 
     }
 
     if (event.key === "Escape") {
-      input.value = formatSelectedRepos(getSelectedRepoIds());
       setOpen(false);
+      trigger?.focus();
     }
   });
 
-  toggle?.addEventListener("click", () => {
-    if (!input || !listbox) return;
-
-    const shouldOpen = listbox.hidden === true;
-    toggle.dataset.tooltipDismissed = "true";
-    input.focus();
-    filterOptions("");
-    setOpen(shouldOpen);
-  });
-
-  toggle?.addEventListener("pointerleave", () => {
-    delete toggle.dataset.tooltipDismissed;
-  });
-
-  toggle?.addEventListener("blur", () => {
-    delete toggle.dataset.tooltipDismissed;
+  closeButton?.addEventListener("click", () => {
+    setOpen(false);
+    trigger?.focus();
   });
 
   options.forEach((option) => {
@@ -279,7 +285,8 @@ const initialLabel = selectedRepository ? repositoryLabel(selectedRepository) : 
   document.addEventListener("pointerdown", (event) => {
     if (picker?.contains(event.target as Node)) return;
 
-    if (input) input.value = formatSelectedRepos(getSelectedRepoIds());
     setOpen(false);
   });
+
+  syncSelectedRepos();
 </script>
