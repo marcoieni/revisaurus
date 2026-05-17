@@ -171,7 +171,7 @@ function prReviewStateLabel(review: PullRequestReview): string {
                           )} · {review.reviewedCommit.slice(0, 8)}
                           {assignees.length > 0 && (
                             <>
-                              {" "}· assigned to{" "}
+                              {" "}· assignees:{" "}
                               {assignees.map((assignee, index) => {
                                 const assigneeUrl = getUserUrl(review, assignee);
 
