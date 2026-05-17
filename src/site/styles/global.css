@@ -97,13 +97,13 @@ a {
     position: relative;
 }
 
-.topbar-tooltip {
+.topbar-tooltip,
+.pr-number::after,
+.review-status-indicator::after,
+.copy-location-button::after {
     position: absolute;
     z-index: 20;
-    right: 50%;
-    bottom: calc(100% + 8px);
     width: max-content;
-    max-width: min(220px, 70vw);
     border-radius: 4px;
     padding: 6px 8px;
     background: #171717;
@@ -113,27 +113,39 @@ a {
     line-height: 1.2;
     opacity: 0;
     pointer-events: none;
-    transform: translate(50%, 2px);
     transition:
         opacity 80ms ease,
         transform 80ms ease;
+}
+
+.topbar-tooltip {
+    right: 50%;
+    bottom: calc(100% + 8px);
+    max-width: min(220px, 70vw);
+    transform: translate(50%, 2px);
     white-space: nowrap;
 }
 
-.topbar-controls .has-tooltip::before {
+.topbar-controls .has-tooltip::before,
+.pr-number::before,
+.review-status-indicator::before,
+.copy-location-button::before {
     position: absolute;
     z-index: 20;
-    right: 50%;
-    bottom: calc(100% + 3px);
     border: 5px solid transparent;
-    border-top-color: #171717;
     content: "";
     opacity: 0;
     pointer-events: none;
-    transform: translate(50%, 2px);
     transition:
         opacity 80ms ease,
         transform 80ms ease;
+}
+
+.topbar-controls .has-tooltip::before {
+    right: 50%;
+    bottom: calc(100% + 3px);
+    border-top-color: #171717;
+    transform: translate(50%, 2px);
 }
 
 .topbar-controls .has-tooltip:hover .topbar-tooltip,
@@ -166,9 +178,7 @@ h1 {
 }
 
 .sr-only,
-.theme-selector legend,
-.diff-overflow-selector legend,
-.diff-layout-selector legend {
+:is(.theme-selector, .diff-overflow-selector, .diff-layout-selector) legend {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -177,9 +187,7 @@ h1 {
     white-space: nowrap;
 }
 
-.theme-selector,
-.diff-overflow-selector,
-.diff-layout-selector {
+:is(.theme-selector, .diff-overflow-selector, .diff-layout-selector) {
     display: inline-grid;
     justify-self: start;
     grid-template-columns: repeat(2, 36px);
@@ -195,17 +203,13 @@ h1 {
     background: #ffffff;
 }
 
-.theme-selector label,
-.diff-overflow-selector label,
-.diff-layout-selector label {
+:is(.theme-selector, .diff-overflow-selector, .diff-layout-selector) label {
     display: grid;
     width: 36px;
     height: 34px;
 }
 
-.theme-selector input,
-.diff-overflow-selector input,
-.diff-layout-selector input {
+:is(.theme-selector, .diff-overflow-selector, .diff-layout-selector) input {
     position: absolute;
     opacity: 0;
     pointer-events: none;
@@ -222,19 +226,25 @@ h1 {
     cursor: pointer;
 }
 
+.control-icon,
 .theme-selector .theme-option::before,
 .diff-overflow-selector .control-icon::before,
 .diff-layout-selector .control-icon::before {
-    width: 18px;
-    height: 18px;
     background: currentColor;
-    content: "";
     -webkit-mask-position: center;
     -webkit-mask-repeat: no-repeat;
     -webkit-mask-size: contain;
     mask-position: center;
     mask-repeat: no-repeat;
     mask-size: contain;
+}
+
+.theme-selector .theme-option::before,
+.diff-overflow-selector .control-icon::before,
+.diff-layout-selector .control-icon::before {
+    width: 18px;
+    height: 18px;
+    content: "";
 }
 
 .diff-overflow-selector label > span:first-of-type,
@@ -306,13 +316,6 @@ h1 {
     width: 18px;
     height: 18px;
     flex: 0 0 auto;
-    background: currentColor;
-    -webkit-mask-position: center;
-    -webkit-mask-repeat: no-repeat;
-    -webkit-mask-size: contain;
-    mask-position: center;
-    mask-repeat: no-repeat;
-    mask-size: contain;
 }
 
 .control-icon-text-wrap {
@@ -736,26 +739,11 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
 .pr-number::after,
 .review-status-indicator::after,
 .copy-location-button::after {
-    position: absolute;
-    z-index: 20;
     right: 0;
     top: calc(100% + 8px);
-    width: max-content;
     max-width: min(240px, 70vw);
-    border-radius: 4px;
-    padding: 6px 8px;
-    background: #171717;
-    color: #ffffff;
     content: attr(data-tooltip);
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1.2;
-    opacity: 0;
-    pointer-events: none;
     transform: translateY(-2px);
-    transition:
-        opacity 80ms ease,
-        transform 80ms ease;
 }
 
 .pr-number::after,
@@ -770,18 +758,9 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
 .pr-number::before,
 .review-status-indicator::before,
 .copy-location-button::before {
-    position: absolute;
-    z-index: 20;
     top: calc(100% + 3px);
-    border: 5px solid transparent;
     border-bottom-color: #171717;
-    content: "";
-    opacity: 0;
-    pointer-events: none;
     transform: translateY(-2px);
-    transition:
-        opacity 80ms ease,
-        transform 80ms ease;
 }
 
 .pr-number::before {
