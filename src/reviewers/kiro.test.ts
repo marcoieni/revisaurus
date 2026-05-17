@@ -20,6 +20,7 @@ const request = {
         provider: "github" as const,
         repoId: "github-example-project",
         number: 123,
+        reviewState: "ready" as const,
         title: "Improve widget",
         url: "https://github.com/example/project/pull/123",
         author: "dev",

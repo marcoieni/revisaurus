@@ -31,6 +31,17 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
 
   return `https://github.com/${encodeURIComponent(review.pullRequest.author)}`;
 }
+
+function prReviewStateLabel(review: PullRequestReview): string {
+  switch (review.pullRequest.reviewState) {
+    case "approved":
+      return "Approved";
+    case "draft":
+      return "Draft";
+    case "ready":
+      return "Ready for review";
+  }
+}
 ---
 
 <main class="app-shell" style={iconStyle}>
@@ -110,7 +121,15 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
                         <Fragment set:html={collapseChevronSvg} />
                       </button>
                       <div>
-                        <a href={review.pullRequest.url}>#{review.pullRequest.number}</a> {review.pullRequest.title}
+                        <a
+                          class={`pr-number ${review.pullRequest.reviewState}`}
+                          href={review.pullRequest.url}
+                          data-tooltip={prReviewStateLabel(review)}
+                          aria-label={`PR #${review.pullRequest.number}: ${prReviewStateLabel(review)}`}
+                        >
+                          #{review.pullRequest.number}
+                        </a>{" "}
+                        {review.pullRequest.title}
                         <p>
                           {authorUrl ? (
                             <a class="review-author" href={authorUrl}>{review.pullRequest.author}</a>

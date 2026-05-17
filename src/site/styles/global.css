@@ -492,6 +492,38 @@ h1 {
     min-width: 0;
 }
 
+.pr-number {
+    position: relative;
+    display: inline-flex;
+    min-width: 44px;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    padding: 0 9px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    line-height: 1;
+    text-decoration: none;
+    vertical-align: 1px;
+}
+
+.pr-number.draft {
+    color: #6b7280;
+    background: #f3f4f6;
+}
+
+.pr-number.ready {
+    color: #2563eb;
+    background: #dbeafe;
+}
+
+.pr-number.approved {
+    color: #147d4f;
+    background: #dff8e8;
+}
+
 .review-meta {
     display: inline-flex;
     flex: 0 0 auto;
@@ -615,6 +647,7 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
     color: #075e54;
 }
 
+.pr-number::after,
 .review-status-indicator::after,
 .copy-location-button::after {
     position: absolute;
@@ -639,6 +672,7 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
         transform 80ms ease;
 }
 
+.pr-number::after,
 .review-status-indicator::after {
     white-space: nowrap;
 }
@@ -647,6 +681,7 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
     white-space: normal;
 }
 
+.pr-number::before,
 .review-status-indicator::before,
 .copy-location-button::before {
     position: absolute;
@@ -663,6 +698,10 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
         transform 80ms ease;
 }
 
+.pr-number::before {
+    right: 16px;
+}
+
 .review-status-indicator::before {
     right: 1px;
 }
@@ -671,6 +710,10 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
     right: 8px;
 }
 
+.pr-number:hover::after,
+.pr-number:hover::before,
+.pr-number:focus-visible::after,
+.pr-number:focus-visible::before,
 .review-status-indicator:hover::after,
 .review-status-indicator:hover::before,
 .review-status-indicator:focus-visible::after,
@@ -806,6 +849,21 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
 :root[data-theme="dark"] .review-header,
 :root[data-theme="dark"] .diff-view {
     border-color: #343940;
+}
+
+:root[data-theme="dark"] .pr-number.draft {
+    background: #272b31;
+    color: #d1d5db;
+}
+
+:root[data-theme="dark"] .pr-number.ready {
+    background: #172554;
+    color: #60a5fa;
+}
+
+:root[data-theme="dark"] .pr-number.approved {
+    background: #123326;
+    color: #5ee28f;
 }
 
 :root[data-theme="dark"] .review-status-indicator {

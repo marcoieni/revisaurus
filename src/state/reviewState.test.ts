@@ -58,6 +58,7 @@ function pullRequest(overrides: Partial<PullRequestSummary> = {}): PullRequestSu
         provider: "github",
         repoId: "repo",
         number: 7,
+        reviewState: "ready",
         title: "Update dependency",
         url: "https://github.com/example/repo/pull/7",
         author: "alice",

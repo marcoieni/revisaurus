@@ -1,6 +1,7 @@
 export type ProviderKind = "github" | "gitlab" | "forgejo";
 
 export type ReviewStatus = "reviewed" | "skipped" | "failed";
+export type PullRequestReviewState = "draft" | "ready" | "approved";
 
 export interface RevisaurConfig {
     outputDir: string;
@@ -37,6 +38,7 @@ export interface PullRequestSummary {
     provider: ProviderKind;
     repoId: string;
     number: number;
+    reviewState: PullRequestReviewState;
     title: string;
     url: string;
     author: string;
