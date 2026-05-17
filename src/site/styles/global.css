@@ -189,8 +189,11 @@ h1 {
 .diff-overflow-selector,
 .diff-layout-selector {
     display: inline-grid;
+    justify-self: start;
     grid-template-columns: repeat(2, 36px);
     gap: 2px;
+    width: max-content;
+    min-inline-size: 0;
     height: 40px;
     box-sizing: border-box;
     margin: 0;
@@ -204,6 +207,8 @@ h1 {
 .diff-overflow-selector label,
 .diff-layout-selector label {
     display: grid;
+    width: 36px;
+    height: 34px;
 }
 
 .theme-selector input,
@@ -908,15 +913,15 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
     }
 
     .topbar-controls {
-        display: grid;
+        display: flex;
         width: 100%;
         flex-basis: auto;
-        grid-template-columns: repeat(3, max-content);
-        justify-content: start;
+        gap: 16px 12px;
+        justify-content: flex-start;
     }
 
     .topbar-controls .repo-picker {
-        grid-column: 1 / -1;
+        flex-basis: 100%;
         width: min(100%, 360px);
     }
 
@@ -933,7 +938,6 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
 
 @media (max-width: 420px) {
     .topbar-controls {
-        grid-template-columns: repeat(2, max-content);
         gap: 12px;
     }
 }
