@@ -45,6 +45,14 @@ function getAuthorUrl(review: PullRequestReview): string | undefined {
   return `https://github.com/${encodeURIComponent(review.pullRequest.author)}`;
 }
 
+function getUserUrl(review: PullRequestReview, user: string): string | undefined {
+  if (review.pullRequest.provider !== "github") {
+    return undefined;
+  }
+
+  return `https://github.com/${encodeURIComponent(user)}`;
+}
+
 function prReviewStateLabel(review: PullRequestReview): string {
   switch (review.pullRequest.reviewState) {
     case "approved":
@@ -144,6 +152,7 @@ function prReviewStateLabel(review: PullRequestReview): string {
             .filter((review) => review.repoId === repo.id)
             .map((review) => {
               const authorUrl = getAuthorUrl(review);
+              const assignees = review.pullRequest.assignees ?? [];
 
               return (
                 <article class="review" data-author={review.pullRequest.author} data-collapsed>
@@ -169,6 +178,25 @@ function prReviewStateLabel(review: PullRequestReview): string {
                             review.pullRequest.author
                           )} · {review.reviewedCommit.slice(0, 8)}
                         </p>
+                        {assignees.length > 0 && (
+                          <p class="review-assignees">
+                            <span>Assigned to</span>{" "}
+                            {assignees.map((assignee, index) => {
+                              const assigneeUrl = getUserUrl(review, assignee);
+
+                              return (
+                                <>
+                                  {index > 0 && <span>, </span>}
+                                  {assigneeUrl ? (
+                                    <a class="review-assignee" href={assigneeUrl}>{assignee}</a>
+                                  ) : (
+                                    <span>{assignee}</span>
+                                  )}
+                                </>
+                              );
+                            })}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div class="review-meta">

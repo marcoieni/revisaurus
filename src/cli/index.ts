@@ -274,6 +274,7 @@ function demoReviews(): PullRequestReview[] {
                 title: "Cache project activity summaries",
                 url: "https://github.com/example/octoflow-api/pull/184",
                 author: "riley",
+                assignees: ["sam", "morgan"],
                 headSha: "9f3b7c2d8a1e4f52b6c901df774aa018e8db7210",
                 baseSha: "3a44a6b65d734515ab54c97f5ec10af42de4b095",
                 updatedAt: new Date(now - 18 * 60 * 60 * 1000).toISOString(),
@@ -292,7 +293,7 @@ index 7c2a915..c91b0f6 100644
 @@ -1,9 +1,20 @@
 +import { redis } from "../redis/client";
  import { loadActivity } from "./loadActivity";
- 
+
 -export async function getActivitySummary(projectId: string) {
 -  return loadActivity(projectId);
 +export async function getActivitySummary(projectId: string, viewerRole: string) {
@@ -314,7 +315,7 @@ index c112243..2d7e401 100644
 @@ -12,7 +12,7 @@ router.get("/projects/:projectId/activity", async (req, res) => {
    const project = await requireProject(req.params.projectId, req.user.id);
    const role = await membershipRole(project.id, req.user.id);
- 
+
 -  const summary = await getActivitySummary(project.id);
 +  const summary = await getActivitySummary(project.id, role);
    res.json({ projectId: project.id, summary });
@@ -363,7 +364,7 @@ index a11d501..df98215 100644
 @@ -4,8 +4,18 @@ import { sendInvite } from "./sendInvite";
  export async function createBulkInvites(projectId: string, emails: string[]) {
    const results = [];
- 
+
 -  for (const email of emails) {
 -    results.push(await sendInvite(projectId, email));
 +  for (const email of emails.map((value) => value.trim().toLowerCase())) {
@@ -378,7 +379,7 @@ index a11d501..df98215 100644
 +      results.push({ email, status: "failed" });
 +    }
    }
- 
+
    return results;
  }`,
             comments: [
@@ -401,6 +402,7 @@ index a11d501..df98215 100644
                 title: "Refresh billing settings page",
                 url: "https://github.com/example/launchpad-web/pull/92",
                 author: "taylor",
+                assignees: ["avery"],
                 headSha: "bd441671ac82ac301bb7fbfcd77c9a4d76c255e2",
                 baseSha: "76b4d911f77394b8ff64536b37ec9cd76f80036f",
                 updatedAt: new Date(now - 7 * 60 * 60 * 1000).toISOString(),
@@ -452,6 +454,7 @@ index 9a070a1..ac13094 100644
                 title: "Migrate analytics cards to server data",
                 url: "https://github.com/example/launchpad-web/pull/88",
                 author: "avery",
+                assignees: ["taylor", "casey"],
                 headSha: "a4acb7846f86b3b783f7311ea1cc06d1f50b7e81",
                 baseSha: "f47dbe2a18d083ada55ff1fcf78fc6e949038935",
                 updatedAt: new Date(now - 5 * 24 * 60 * 60 * 1000).toISOString(),
@@ -488,6 +491,7 @@ index 51ed23b..5a299ce 100644
                 title: "Retry failed export jobs",
                 url: "https://github.com/example/nimbus-worker/pull/57",
                 author: "jordan",
+                assignees: ["casey"],
                 headSha: "19b6cf0d23f7a40e9c1b4d88fa75e639ad214c0f",
                 baseSha: "c6aa0f37ce7a9a6a6d3c726e2bd9b9f2d43e7a0a",
                 updatedAt: new Date(now - 11 * 60 * 60 * 1000).toISOString(),
@@ -506,7 +510,7 @@ index 3c8f2a1..70b546d 100644
 @@ -8,10 +8,19 @@ const MAX_ATTEMPTS = 5;
  export async function retryExportJob(job: ExportJob) {
    const nextAttempt = job.attempt + 1;
- 
+
 -  if (nextAttempt > MAX_ATTEMPTS) {
 -    await markExportFailed(job.id);
 -    return;
@@ -544,6 +548,7 @@ index 3c8f2a1..70b546d 100644
                 title: "Stream worker health metrics",
                 url: "https://github.com/example/nimbus-worker/pull/51",
                 author: "casey",
+                assignees: ["jordan", "riley"],
                 headSha: "f84ce159498a5021845c45fbe21f1db8b9fb11dc",
                 baseSha: "52cb1b8ff13861d8295f2d46550653a61e747d09",
                 updatedAt: new Date(now - 4 * 24 * 60 * 60 * 1000).toISOString(),
@@ -560,7 +565,7 @@ index 42b8dd0..65463ef 100644
 +++ b/src/metrics/stream.ts
 @@ -1,8 +1,18 @@
  import { collectWorkerMetrics } from "./collect";
- 
+
 +const subscribers = new Set<(event: WorkerMetric) => void>();
 +
  export function publishWorkerMetric(workerId: string) {
