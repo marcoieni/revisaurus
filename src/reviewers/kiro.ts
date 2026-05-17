@@ -92,7 +92,7 @@ Return only valid JSON with this exact shape and no surrounding text:
 ${reviewJsonShape}
 
 Use "right" for added/new lines and "left" for removed/old lines. Tie all comments to specific diff lines.
-Summaries and comment bodies may contain markdown. Use escaped JSON newlines ("\\n") when they improve readability.
+Summaries and comment bodies must contain markdown (use backticks for code and to avoid underscore being threated as italic). Use escaped JSON newlines ("\\n") when they improve readability.
 If there are no findings, return an empty comments array.
 If you cannot complete the review, still return valid JSON with a summary explaining the limitation and an empty comments array.
 
