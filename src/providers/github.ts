@@ -22,10 +22,8 @@ export class GitHubProvider implements RepositoryProvider {
             [perPageKey]: Math.min(repo.maxPullRequests * 3, 100),
         });
 
-        const skipped = new Set(repo.skippedAuthors.map((author) => author.toLowerCase()));
-
         const pullRequests = response.data
-            .filter((pr) => !skipped.has((pr.user?.login ?? "").toLowerCase()))
+            .filter((pr) => matchesPullRequestFilters(repo, pr))
             .slice(0, repo.maxPullRequests);
 
         return Promise.all(
@@ -89,4 +87,33 @@ export class GitHubProvider implements RepositoryProvider {
 
         return latestStates.includes("APPROVED") ? "approved" : "ready";
     }
+}
+
+function matchesPullRequestFilters(
+    repo: RepositoryConfig,
+    pr: { user?: { login?: string } | null; assignees?: { login?: string }[] | null },
+): boolean {
+    const author = (pr.user?.login ?? "").toLowerCase();
+    const skippedAuthors = new Set(repo.skippedAuthors.map((user) => user.toLowerCase()));
+
+    if (skippedAuthors.has(author)) {
+        return false;
+    }
+
+    const includedAuthors = new Set(repo.includedAuthors.map((user) => user.toLowerCase()));
+    const includedAssignees = new Set(repo.includedAssignees.map((user) => user.toLowerCase()));
+
+    if (includedAuthors.size === 0 && includedAssignees.size === 0) {
+        return true;
+    }
+
+    if (includedAuthors.has(author)) {
+        return true;
+    }
+
+    return (
+        pr.assignees
+            ?.map((assignee) => assignee.login?.toLowerCase() ?? "")
+            .some((assignee) => includedAssignees.has(assignee)) ?? false
+    );
 }

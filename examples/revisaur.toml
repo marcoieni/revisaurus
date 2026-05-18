@@ -1,6 +1,8 @@
 output_dir = "site-dist"
 data_dir = ".revisaur/data"
 max_pull_requests = 10
+included_authors = []
+included_assignees = []
 skipped_authors = ["renovate", "renovate[bot]", "dependabot", "dependabot[bot]"]
 prompt_instructions = "Prioritize correctness, security, and regressions over style nits."
 
