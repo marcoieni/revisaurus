@@ -53,6 +53,7 @@ export class KiroReviewer implements Reviewer {
         });
 
         const rawOutput = formatReviewerOutput(result.stdout, result.stderr);
+        logKiroOutput(result);
         if (result.failed) {
             throw new Error(formatReviewerFailure(result, rawOutput));
         }
@@ -124,6 +125,20 @@ ${previousOutput.slice(0, 12000)}`;
 function formatReviewerOutput(stdout: string, stderr: string): string {
     const parts = [stdout, stderr].filter((part) => part.trim().length > 0);
     return stripControlCharacters(parts.join("\n"));
+}
+
+function logKiroOutput(result: { exitCode?: number; stdout: string; stderr: string }): void {
+    const stdout = stripControlCharacters(result.stdout).trim();
+    const stderr = stripControlCharacters(result.stderr).trim();
+    const exitCode = result.exitCode === undefined ? "unknown" : result.exitCode.toString();
+
+    console.log(
+        [
+            `Kiro exit code: ${exitCode}`,
+            `Kiro stdout: ${stdout === "" ? "<empty>" : stdout}`,
+            `Kiro stderr: ${stderr === "" ? "<empty>" : stderr}`,
+        ].join("\n"),
+    );
 }
 
 function formatReviewerFailure(
