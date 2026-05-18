@@ -69,6 +69,8 @@ pnpm dev
 output_dir = "site-dist"
 data_dir = ".revisaur/data"
 max_pull_requests = 10
+included_authors = []
+included_assignees = []
 skipped_authors = ["renovate", "renovate[bot]", "dependabot", "dependabot[bot]"]
 prompt_instructions = "Prioritize correctness, security, and regressions over style nits."
 
@@ -86,6 +88,8 @@ url = "https://github.com/withastro/astro"
 max_pull_requests = 5
 # prompt_instructions = "Repository-specific instructions override the global prompt_instructions value."
 ```
+
+Use `included_authors` to review only pull requests opened by specific users, and `included_assignees` to review only pull requests assigned to specific users. If both are configured, a pull request matching either list is reviewed. `skipped_authors` excludes pull requests by author and takes precedence over include filters. Repository-level user filters are merged with global user filters.
 
 Use `prompt_instructions` to add reviewer guidance to the generated prompt. A repository-level value overrides the global value for that repository.
 
