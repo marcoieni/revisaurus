@@ -1,10 +1,11 @@
 ---
 import type { PullRequestReview, RepositoryConfig } from "../../types/revisaur.js";
 import { repositoryLabel } from "../repositories.js";
-import { browserReviewKey, reviewAddressedKey } from "../runtime/addressed.js";
+import { browserReviewKey, commentAddressedKey, reviewAddressedKey } from "../runtime/addressed.js";
 import { publicAssetCssUrl, publicAssetPath } from "../runtime/assets.js";
 import { collapseChevronSvg } from "../runtime/icons.js";
 import FilterPicker from "./FilterPicker.astro";
+import MarkdownSource from "./MarkdownSource.astro";
 import RepositoryPicker from "./RepositoryPicker.astro";
 import ReviewIndicator from "./ReviewIndicator.astro";
 
@@ -241,7 +242,7 @@ function prReviewStateLabel(review: PullRequestReview): string {
                     </div>
                   </header>
                   <div class="review-body">
-                    <div class="summary">{review.summary}</div>
+                    <div class="summary"><MarkdownSource source={review.summary} /></div>
                     {review.error && <pre class="error">{review.error}</pre>}
                     <div
                       class="diff-view"
@@ -250,6 +251,11 @@ function prReviewStateLabel(review: PullRequestReview): string {
                       data-comments={encodeURIComponent(JSON.stringify(review.comments))}
                     >
                     </div>
+                    {review.comments.map((comment, index) => (
+                      <template data-markdown-source-key={commentAddressedKey(reviewKey, comment, index)}>
+                        <MarkdownSource source={comment.body} />
+                      </template>
+                    ))}
                   </div>
                 </article>
               );

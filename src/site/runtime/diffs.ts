@@ -7,12 +7,8 @@ import {
     type FileDiffMetadata,
     type ThemeTypes,
 } from "@pierre/diffs";
-import hljs from "highlight.js/lib/core";
-import markdown from "highlight.js/lib/languages/markdown";
 import { commentAddressedKey, loadAddressedState, setAddressedValue, type AddressedComment } from "./addressed.js";
 import { collapseChevronSvg } from "./icons.js";
-
-hljs.registerLanguage("markdown", markdown);
 
 const diffs: FileDiff<ReviewAnnotation>[] = [];
 const diffRenderState = new Map<
@@ -28,12 +24,6 @@ let currentOverflow = getCurrentOverflow();
 let currentDiffStyle = getCurrentDiffStyle();
 const copyFileNameLabel = "Copy file name to clipboard";
 let addressedState = loadAddressedState();
-
-for (const summary of document.querySelectorAll<HTMLElement>(".summary")) {
-    const markdownSource = summary.textContent;
-    summary.textContent = "";
-    renderMarkdownSource(summary, markdownSource);
-}
 
 document.addEventListener("theme:selected", (event) => {
     const selectedTheme = getCustomEventValue(event, "theme");
@@ -121,7 +111,7 @@ for (const container of document.querySelectorAll<HTMLElement>(".diff-view")) {
                     node.toggleAttribute("data-addressed", addressed);
                     node.style.color = "#171717";
                     node.innerHTML = `<div class="review-comment-header"><label class="addressed-toggle review-comment-addressed"><input type="checkbox" data-addressed-toggle data-addressed-key="${escapeAttribute(comment.addressedKey)}"${addressed ? " checked" : ""} aria-label="Addressed" /></label><strong>${escapeHtml(comment.severity)}</strong><button class="copy-location-button" type="button" data-location="${escapeAttribute(location)}" data-tooltip="${copyFileNameLabel}" aria-label="${copyFileNameLabel}"><span class="copy-location-icon" aria-hidden="true"></span><span class="sr-only">${copyFileNameLabel}</span></button></div>`;
-                    renderMarkdownSource(node, comment.body);
+                    renderMarkdownSource(node, comment.body, comment.addressedKey);
                     const addressedToggle = node.querySelector<HTMLInputElement>("[data-addressed-toggle]");
                     addressedToggle?.addEventListener("change", () => {
                         addressedState = setAddressedValue(
@@ -204,14 +194,31 @@ function escapeAttribute(value: string): string {
     return escapeHtml(value).replaceAll('"', "&quot;");
 }
 
-function renderMarkdownSource(container: HTMLElement, markdownSource: string): void {
+function renderMarkdownSource(container: HTMLElement, markdownSource: string, sourceKey: string): void {
+    const rendered = getRenderedMarkdownSource(sourceKey);
+    if (rendered) {
+        container.append(rendered);
+        return;
+    }
+
     const pre = document.createElement("pre");
     const code = document.createElement("code");
-    pre.className = "markdown-source";
-    code.className = "hljs language-markdown";
-    code.innerHTML = hljs.highlight(markdownSource, { language: "markdown" }).value;
+    const wrapper = document.createElement("div");
+    wrapper.className = "markdown-source";
+    code.textContent = markdownSource;
     pre.append(code);
-    container.append(pre);
+    wrapper.append(pre);
+    container.append(wrapper);
+}
+
+function getRenderedMarkdownSource(sourceKey: string): DocumentFragment | undefined {
+    for (const template of document.querySelectorAll<HTMLTemplateElement>("template[data-markdown-source-key]")) {
+        if (template.dataset.markdownSourceKey === sourceKey) {
+            return template.content.cloneNode(true) as DocumentFragment;
+        }
+    }
+
+    return undefined;
 }
 
 async function copyLocation(button: HTMLButtonElement, location: string): Promise<void> {
