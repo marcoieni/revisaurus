@@ -325,6 +325,8 @@ function prReviewStateLabel(review: PullRequestReview): string {
     review?.toggleAttribute("data-addressed", addressed);
     if (review && addressed) {
       setReviewCollapsed(review, true);
+    } else if (review) {
+      setReviewCollapsed(review, false);
     }
   };
   const initializeAddressedToggle = (input: HTMLInputElement) => {
