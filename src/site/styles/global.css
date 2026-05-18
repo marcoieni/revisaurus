@@ -760,6 +760,11 @@ h1 {
     font-style: italic;
 }
 
+.markdown-source .hljs-emphasis {
+    color: inherit;
+    font-style: normal;
+}
+
 .hljs-code,
 .hljs-quote {
     color: #6d28d9;
@@ -1131,6 +1136,10 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
 
 :root[data-theme="dark"] .hljs-emphasis {
     color: #5bd0b2;
+}
+
+:root[data-theme="dark"] .markdown-source .hljs-emphasis {
+    color: inherit;
 }
 
 :root[data-theme="dark"] .hljs-code,
