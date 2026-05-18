@@ -729,7 +729,24 @@ h1 {
     line-height: 1.55;
 }
 
-.markdown-source {
+.markdown-source,
+.app-shell .markdown-source .astro-code {
+    --astro-code-foreground: #171717;
+    --astro-code-background: transparent;
+    --astro-code-token-constant: #b91c1c;
+    --astro-code-token-string: #2563eb;
+    --astro-code-token-comment: #6d28d9;
+    --astro-code-token-keyword: #7c2d12;
+    --astro-code-token-parameter: #075e54;
+    --astro-code-token-function: #7c2d12;
+    --astro-code-token-string-expression: #2563eb;
+    --astro-code-token-punctuation: #b45309;
+    --astro-code-token-link: #b45309;
+    margin: 0;
+}
+
+.markdown-source .astro-code,
+.markdown-source pre {
     margin: 0;
     overflow-x: auto;
     white-space: pre-wrap;
@@ -744,40 +761,10 @@ h1 {
         monospace;
 }
 
-.markdown-source code {
+.markdown-source code,
+.markdown-source .astro-code code {
     display: block;
     min-width: 0;
-}
-
-.hljs-section,
-.hljs-strong {
-    color: #7c2d12;
-    font-weight: 700;
-}
-
-.hljs-emphasis {
-    color: #075e54;
-    font-style: italic;
-}
-
-.hljs-code,
-.hljs-quote {
-    color: #6d28d9;
-}
-
-.hljs-bullet,
-.hljs-symbol,
-.hljs-link {
-    color: #b45309;
-}
-
-.hljs-string,
-.hljs-title {
-    color: #2563eb;
-}
-
-.hljs-literal {
-    color: #b91c1c;
 }
 
 .review-collapse-toggle,
@@ -1124,33 +1111,32 @@ diffs-container[data-collapsed] .diff-collapse-toggle svg {
     color: #fca5a5;
 }
 
-:root[data-theme="dark"] .hljs-section,
-:root[data-theme="dark"] .hljs-strong {
-    color: #fdba74;
+:root[data-theme="dark"] .markdown-source,
+:root[data-theme="dark"] .app-shell .markdown-source .astro-code {
+    --astro-code-foreground: #f8fafc;
+    --astro-code-token-constant: #fca5a5;
+    --astro-code-token-string: #93c5fd;
+    --astro-code-token-comment: #c4b5fd;
+    --astro-code-token-keyword: #fdba74;
+    --astro-code-token-parameter: #5bd0b2;
+    --astro-code-token-function: #fdba74;
+    --astro-code-token-string-expression: #93c5fd;
+    --astro-code-token-punctuation: #fbbf24;
+    --astro-code-token-link: #fbbf24;
 }
 
-:root[data-theme="dark"] .hljs-emphasis {
-    color: #5bd0b2;
-}
-
-:root[data-theme="dark"] .hljs-code,
-:root[data-theme="dark"] .hljs-quote {
-    color: #c4b5fd;
-}
-
-:root[data-theme="dark"] .hljs-bullet,
-:root[data-theme="dark"] .hljs-symbol,
-:root[data-theme="dark"] .hljs-link {
-    color: #fbbf24;
-}
-
-:root[data-theme="dark"] .hljs-string,
-:root[data-theme="dark"] .hljs-title {
-    color: #93c5fd;
-}
-
-:root[data-theme="dark"] .hljs-literal {
-    color: #fca5a5;
+:root[data-theme="dark"] .review-comment .markdown-source,
+:root[data-theme="dark"] .app-shell .review-comment .markdown-source .astro-code {
+    --astro-code-foreground: #171717;
+    --astro-code-token-constant: #b91c1c;
+    --astro-code-token-string: #2563eb;
+    --astro-code-token-comment: #6d28d9;
+    --astro-code-token-keyword: #7c2d12;
+    --astro-code-token-parameter: #075e54;
+    --astro-code-token-function: #7c2d12;
+    --astro-code-token-string-expression: #2563eb;
+    --astro-code-token-punctuation: #b45309;
+    --astro-code-token-link: #b45309;
 }
 
 @media (max-width: 760px) {
